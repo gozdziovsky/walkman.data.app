@@ -29,8 +29,12 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: { album: Album
   const del = async () => {
     if (!confirm('Are you sure? This action is permanent.')) return;
     setIsDeleting(true);
-    await supabase.from('albums').delete().eq('id', album.id);
-    onUpdateSuccess(); onClose();
+    try {
+      await supabase.from('albums').delete().eq('id', album.id);
+      onUpdateSuccess(); onClose();
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const openLink = (url?: string) => {
@@ -47,9 +51,12 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: { album: Album
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent md:bg-gradient-to-r" />
           
           <div className="absolute top-6 left-6 flex gap-2">
-            <button onClick={() => setIsEdit(!isEdit)} className={`p-4 rounded-full backdrop-blur-md transition-all ${isEdit ? 'bg-green-500 text-black shadow-lg shadow-green-500/20' : 'bg-black/40 text-white'}`}><Edit3 size={18} /></button>
+            <button onClick={() => setIsEdit(!isEdit)} className={`p-4 rounded-full backdrop-blur-md transition-all ${isEdit ? 'bg-green-500 text-black' : 'bg-black/40 text-white'}`}><Edit3 size={18} /></button>
             <button onClick={del} className="p-4 bg-red-500/20 text-red-500 rounded-full backdrop-blur-md hover:bg-red-500 hover:text-white transition-all">{isDeleting ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}</button>
           </div>
+          <button onClick={onClose} className="absolute top-6 right-6 p-3 bg-black/40 text-white rounded-full backdrop-blur-md transition-transform active:scale-90">
+            <X size={18} />
+          </button>
         </div>
 
         {/* INFO SIDE */}
@@ -64,13 +71,21 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: { album: Album
                 
                 <div className="space-y-3">
                   <p className="text-[9px] font-black uppercase text-zinc-500 tracking-widest">Streaming Links</p>
-                  <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold outline-none" value={form.spotify_url} onChange={e => setForm({...form, spotify_url: e.target.value})} placeholder="Spotify URL" />
-                  <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold outline-none" value={form.youtube_url} onChange={e => setForm({...form, youtube_url: e.target.value})} placeholder="YouTube URL" />
+                  <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold outline-none" value={form.spotify_url || ''} onChange={e => setForm({...form, spotify_url: e.target.value})} placeholder="Spotify URL" />
+                  <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold outline-none" value={form.youtube_url || ''} onChange={e => setForm({...form, youtube_url: e.target.value})} placeholder="YouTube URL" />
                 </div>
 
                 <div className="space-y-3">
                   <p className="text-[9px] font-black uppercase text-zinc-500 tracking-widest">Tracks</p>
-                  <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold min-h-[120px] outline-none" value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} placeholder="1. Track..." />
+                  <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold min-h-[120px] outline-none" value={form.tracks || ''} onChange={e => setForm({...form, tracks: e.target.value})} placeholder="1. Track..." />
+                </div>
+
+                <div className="flex gap-2">
+                  {[1,2,3,4,5].map(s => (
+                    <button key={s} type="button" onClick={() => setForm({...form, rating: s})} className={(form.rating ?? 0) >= s ? 'text-yellow-500' : 'text-zinc-800'}>
+                      <Star size={20} fill={(form.rating ?? 0) >= s ? 'currentColor' : 'none'} />
+                    </button>
+                  ))}
                 </div>
 
                 <button onClick={update} className="w-full py-4 bg-green-500 text-black rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">Save Changes</button>
@@ -93,7 +108,6 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: { album: Album
                   <div className="px-4 py-2 bg-zinc-900 border border-green-500/30 rounded-lg text-[9px] font-black uppercase tracking-widest text-green-500">{album.format}</div>
                 </div>
 
-                {/* TRACKLIST SECTION */}
                 {album.tracks && (
                   <div className="mb-10 bg-white/[0.02] rounded-[2rem] p-6 border border-white/5">
                     <p className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] mb-4 flex items-center gap-2"><Music size={12} /> Tracklist</p>
