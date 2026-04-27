@@ -26,7 +26,7 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
     try {
       const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=4`);
       const data = await res.json();
-      setResults(data.results);
+      setResults(data.results || []);
     } finally { setSearching(false); }
   };
 
@@ -38,8 +38,7 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
       title: item.collectionName, 
       coverUrl: img, 
       genre: item.primaryGenreName, 
-      year: new Date(item.releaseDate).getFullYear(),
-      spotify_url: item.collectionViewUrl 
+      year: new Date(item.releaseDate).getFullYear() 
     });
     setImagePreview(img);
     setResults([]);
@@ -52,39 +51,40 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
     try {
       let url = form.coverUrl;
       if (imageFile) {
-        const path = `covers/${Date.now()}.jpg`;
-        await supabase.storage.from('album-covers').upload(path, imageFile);
+        const path = `${Date.now()}.jpg`;
+        const { error: uploadError } = await supabase.storage.from('album-covers').upload(path, imageFile);
+        if (uploadError) throw uploadError;
         url = supabase.storage.from('album-covers').getPublicUrl(path).data.publicUrl;
       }
-      const { error } = await supabase.from('albums').insert([{ ...form, coverUrl: url }]);
+      if (!url) {
+        alert('Please add a cover image');
+        setLoading(false);
+        return;
+      }
+      const { error } = await supabase.from('albums').insert([url === form.coverUrl ? form : { ...form, coverUrl: url }]);
       if (error) throw error;
       onSuccess(); onClose();
-    } catch (err) { 
-      alert('Error saving album'); 
-    } finally { setLoading(false); }
+    } catch (err) { alert('Error: Check Supabase SQL and Storage policies'); } finally { setLoading(false); }
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
       <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="bg-zinc-900 w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[3rem] p-8 md:p-12 overflow-y-auto max-h-[92vh] border-t md:border border-white/10" onClick={e => e.stopPropagation()}>
-        
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-black uppercase tracking-tighter italic">New <span className="text-green-500">Entry</span></h2>
           <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-500"><X size={20} /></button>
         </header>
 
         <div className="relative mb-8">
-          <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 focus-within:border-green-500/50 transition-all">
-            <input className="flex-1 bg-transparent px-4 py-2 outline-none text-sm font-bold" placeholder="Auto-fill via iTunes..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), search())} />
-            <button type="button" onClick={search} className="px-5 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-transform">
-              {searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}
-            </button>
+          <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 focus-within:border-green-500/50">
+            <input className="flex-1 bg-transparent px-4 py-2 outline-none text-sm font-bold" placeholder="Auto-fill search..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), search())} />
+            <button type="button" onClick={search} className="px-5 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest">{searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}</button>
           </div>
           {results.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50">
               {results.map(r => (
-                <button key={r.collectionId} type="button" onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-white/5 border-b border-white/5 last:border-0 text-left transition-colors">
-                  <img src={r.artworkUrl60} className="w-10 h-10 rounded-lg" />
+                <button key={r.collectionId} type="button" onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-white/5 border-b border-white/5 last:border-0 text-left">
+                  <img src={r.artworkUrl60} className="w-10 h-10 rounded-lg" alt="" />
                   <div className="truncate"><p className="text-xs font-black uppercase truncate">{r.collectionName}</p><p className="text-[10px] text-zinc-500 font-bold uppercase">{r.artistName}</p></div>
                 </button>
               ))}
@@ -92,41 +92,36 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col md:flex-row gap-8">
-            <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-48 aspect-square bg-zinc-800 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0">
-              {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover group-hover:opacity-40 transition-opacity" /> : <ImageIcon className="text-zinc-700" size={32} />}
+            <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-48 aspect-square bg-zinc-800 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative shrink-0">
+              {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover" alt="" /> : <ImageIcon className="text-zinc-700" size={32} />}
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); setImagePreview(URL.createObjectURL(e.target.files[0])); }}} />
             </div>
-
             <div className="flex-1 space-y-4">
-              <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-green-500" placeholder="Artist" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} />
-              <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-green-500" placeholder="Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
+              <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none" placeholder="Artist" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} />
+              <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none" placeholder="Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
               <div className="grid grid-cols-2 gap-3">
                 <input type="number" className="w-full bg-zinc-800 rounded-xl px-4 py-3 text-xs font-bold" value={form.year} onChange={e => setForm({...form, year: parseInt(e.target.value)})} />
                 <input className="w-full bg-zinc-800 rounded-xl px-4 py-3 text-xs font-bold" placeholder="Genre" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} />
               </div>
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold focus:border-green-500" placeholder="Spotify URL" value={form.spotify_url} onChange={e => setForm({...form, spotify_url: e.target.value})} />
-            <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold" placeholder="YouTube URL" value={form.youtube_url} onChange={e => setForm({...form, youtube_url: e.target.value})} />
+            <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-xs font-bold" placeholder="Spotify URL" value={form.spotify_url} onChange={e => setForm({...form, spotify_url: e.target.value})} />
+            <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-xs font-bold" placeholder="YouTube URL" value={form.youtube_url} onChange={e => setForm({...form, youtube_url: e.target.value})} />
           </div>
-
-          <textarea className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold min-h-[100px] outline-none" placeholder="Tracklist..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
-
+          <textarea className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold min-h-[80px]" placeholder="Tracklist..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
           <div className="flex gap-4">
             <select className="flex-1 bg-zinc-800 rounded-xl px-4 py-4 text-[11px] font-black uppercase" value={form.format} onChange={e => setForm({...form, format: e.target.value as any})}>
               <option value="FLAC">FLAC</option><option value="CD">CD</option><option value="MP3">MP3</option><option value="Hi-Res">Hi-Res</option>
             </select>
             <select className="flex-1 bg-zinc-800 rounded-xl px-4 py-4 text-[11px] font-black uppercase text-green-500" value={form.status} onChange={e => setForm({...form, status: e.target.value as any})}>
-              <option value="MAM">In Library</option><option value="SZUKAM">Wishlist</option>
+              <option value="MAM">Owned</option><option value="SZUKAM">Wishlist</option>
             </select>
           </div>
-
-          <button disabled={loading} type="submit" className="w-full py-5 bg-green-500 text-black rounded-3xl font-black uppercase tracking-widest text-[11px] active:scale-95 transition-all">
-            {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Save Vibe to Cloud'}
+          <button disabled={loading} type="submit" className="w-full py-5 bg-green-500 text-black rounded-3xl font-black uppercase tracking-widest text-[11px]">
+            {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Save to Cloud'}
           </button>
         </form>
       </motion.div>
