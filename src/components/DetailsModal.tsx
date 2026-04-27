@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, MonitorPlay, Trash2, Edit3, Save, ImageIcon, Search, Loader2, Calendar, Music, ListMusic, Link2, Star } from 'lucide-react';
+import { X, Play, MonitorPlay, Trash2, Edit3, Save, ImageIcon, Search, Loader2, Calendar, Music, ListMusic, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Album } from '../types/album';
 
@@ -22,17 +22,17 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: DetailsModalPr
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // LOGIKA DYNAMICZNEGO WYSZUKIWANIA
+  // NAPRAWIONE URL-E WYSZUKIWANIA
   const getSpotifySearchUrl = () => {
     if (album.spotify_url) return album.spotify_url;
-    const query = encodeURIComponent(`${album.artist} - ${album.title}`);
-    return `https://open.spotify.com/search/${query}`;
+    const searchQuery = encodeURIComponent(`${album.artist} ${album.title}`);
+    return `https://open.spotify.com/search/${searchQuery}`;
   };
 
   const getYoutubeSearchUrl = () => {
     if (album.youtube_url) return album.youtube_url;
-    const query = encodeURIComponent(`${album.artist} - ${album.title} album`);
-    return `https://www.youtube.com/results?search_query=${query}`;
+    const searchQuery = encodeURIComponent(`${album.artist} ${album.title} full album`);
+    return `https://www.youtube.com/results?search_query=${searchQuery}`;
   };
 
   const handleSearchCover = async () => {
@@ -72,16 +72,32 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: DetailsModalPr
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
-      <motion.div layout className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden border-t border-white/10 flex flex-col md:row max-h-[95vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6" 
+      onClick={onClose}
+    >
+      <motion.div 
+        layout 
+        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden border-t border-white/10 flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative" 
+        onClick={e => e.stopPropagation()}
+      >
         
         {/* LEWA STRONA: OKŁADKA */}
         <div className="w-full md:w-1/2 aspect-square relative bg-zinc-800 shrink-0">
-          <img src={imagePreview || album.coverUrl} className={`w-full h-full object-cover transition-all duration-500 ${isEdit ? 'opacity-40 blur-sm' : 'opacity-100'}`} alt="" />
+          <img 
+            src={imagePreview || album.coverUrl} 
+            className={`w-full h-full object-cover transition-all duration-500 ${isEdit ? 'opacity-40 blur-sm' : 'opacity-100'}`} 
+            alt="" 
+          />
           
           {isEdit && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 space-y-4">
-              <button onClick={() => fileInputRef.current?.click()} className="bg-white text-black px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
+              <button 
+                onClick={() => fileInputRef.current?.click()} 
+                className="bg-white text-black px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2"
+              >
                 <ImageIcon size={16} /> Upload File
               </button>
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => {
@@ -90,29 +106,29 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: DetailsModalPr
                   setImagePreview(URL.createObjectURL(e.target.files[0]));
                 }
               }} />
-              <div className="w-full max-w-xs space-y-2">
-                <div className="flex gap-2 bg-black/60 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
-                  <input className="bg-transparent flex-1 pl-3 text-xs font-bold outline-none text-white" placeholder="Search iTunes..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearchCover()} />
-                  <button onClick={handleSearchCover} className="p-2 bg-white/10 rounded-xl text-white">{searching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}</button>
-                </div>
-              </div>
             </div>
           )}
 
           {!isEdit && (
             <div className="absolute top-6 left-6 flex gap-3">
-              <button onClick={() => setIsEdit(true)} className="p-4 bg-black/40 backdrop-blur-xl rounded-full text-white hover:bg-white hover:text-black transition-all active:scale-90 shadow-xl"><Edit3 size={20} /></button>
-              <button onClick={handleDelete} className="p-4 bg-red-500/20 backdrop-blur-xl rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-90 shadow-xl"><Trash2 size={20} /></button>
+              <button onClick={() => setIsEdit(true)} className="p-4 bg-black/40 backdrop-blur-xl rounded-full text-white hover:bg-white hover:text-black transition-all active:scale-90 shadow-xl">
+                <Edit3 size={20} />
+              </button>
+              <button onClick={handleDelete} className="p-4 bg-red-500/20 backdrop-blur-xl rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-90 shadow-xl">
+                <Trash2 size={20} />
+              </button>
             </div>
           )}
-          <button onClick={onClose} className="absolute top-6 right-6 p-4 bg-black/40 backdrop-blur-xl rounded-full text-white active:scale-90"><X size={20} /></button>
+          <button onClick={onClose} className="absolute top-6 right-6 p-4 bg-black/40 backdrop-blur-xl rounded-full text-white active:scale-90">
+            <X size={20} />
+          </button>
         </div>
 
         {/* PRAWA STRONA: DANE */}
         <div className="p-8 md:p-12 flex-1 overflow-y-auto no-scrollbar bg-zinc-900 text-white">
           <AnimatePresence mode="wait">
             {isEdit ? (
-              <motion.div key="edit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+              <motion.div key="edit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 pb-10">
                 <h3 className="text-xl font-black uppercase italic text-green-500">Edit Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -124,37 +140,23 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: DetailsModalPr
                     <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-green-500/50" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Year</label>
-                    <input type="number" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold" value={form.year} onChange={e => setForm({...form, year: parseInt(e.target.value)})} />
+                    <input type="number" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none" value={form.year} onChange={e => setForm({...form, year: parseInt(e.target.value)})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Genre</label>
-                    <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                   <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Format</label>
-                    <select className="w-full bg-zinc-800 rounded-xl px-3 py-3 text-[10px] font-black uppercase outline-none" value={form.format} onChange={e => setForm({...form, format: e.target.value as any})}>
-                      <option value="FLAC">FLAC</option><option value="MP3">MP3</option><option value="Hi-Res">Hi-Res</option><option value="-">-</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Status</label>
-                    <select className="w-full bg-zinc-800 rounded-xl px-3 py-3 text-[10px] font-black uppercase outline-none" value={form.status} onChange={e => setForm({...form, status: e.target.value as any})}>
-                      <option value="MAM">Owned</option><option value="SZUKAM">Wishlist</option>
-                    </select>
+                    <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Rating</label>
-                    <input type="number" className="w-full bg-zinc-800 rounded-xl px-3 py-3 text-xs font-bold" value={form.rating} onChange={e => setForm({...form, rating: parseInt(e.target.value)})} />
+                    <input type="number" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none" value={form.rating} onChange={e => setForm({...form, rating: parseInt(e.target.value)})} />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Manual Spotify URL (Optional)</label>
-                  <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-mono outline-none" placeholder="Keep empty for auto-search" value={form.spotify_url || ''} onChange={e => setForm({...form, spotify_url: e.target.value})} />
+                  <label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Manual Spotify Link (Optional)</label>
+                  <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-mono outline-none" value={form.spotify_url || ''} onChange={e => setForm({...form, spotify_url: e.target.value})} placeholder="https://open.spotify.com/..." />
                 </div>
                 <div className="flex gap-4 pt-4">
                   <button onClick={() => setIsEdit(false)} className="flex-1 py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase text-[10px]">Cancel</button>
@@ -190,15 +192,21 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess }: DetailsModalPr
                   </div>
                 )}
 
-                {/* DYNAMICZNE PRZYCISKI WYSZUKIWANIA */}
+                {/* PRZYCISKI Z POPRAWIONYMI LINKAMI */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
-                  <button onClick={() => window.open(getSpotifySearchUrl(), '_blank')} className="py-5 bg-white text-black rounded-[1.8rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-green-500 transition-colors shadow-xl group">
-                    <Play size={18} fill="black" className="group-hover:scale-110 transition-transform" /> 
-                    {album.spotify_url ? 'Spotify Library' : 'Search Spotify'}
+                  <button 
+                    onClick={() => window.open(getSpotifySearchUrl(), '_blank')} 
+                    className="py-5 bg-white text-black rounded-[1.8rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-green-500 transition-colors shadow-xl active:scale-95 transition-transform"
+                  >
+                    <Play size={18} fill="black" /> 
+                    {album.spotify_url ? 'Open Spotify' : 'Search Spotify'}
                   </button>
-                  <button onClick={() => window.open(getYoutubeSearchUrl(), '_blank')} className="py-5 bg-zinc-800 text-white rounded-[1.8rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-red-600 transition-colors group">
-                    <MonitorPlay size={18} className="group-hover:scale-110 transition-transform" /> 
-                    {album.youtube_url ? 'Watch Video' : 'Search YouTube'}
+                  <button 
+                    onClick={() => window.open(getYoutubeSearchUrl(), '_blank')} 
+                    className="py-5 bg-zinc-800 text-white rounded-[1.8rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-red-600 transition-all active:scale-95 transition-transform"
+                  >
+                    <MonitorPlay size={18} /> 
+                    {album.youtube_url ? 'Watch YouTube' : 'Search YouTube'}
                   </button>
                 </div>
               </motion.div>
