@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
-import { X, LayoutGrid, Zap, BookmarkCheck, Disc, ArrowUpDown } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, LayoutGrid, Zap, BookmarkCheck, Disc, ArrowUpDown, ChevronDown } from 'lucide-react';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -20,7 +21,9 @@ export const SettingsModal = ({
   defaultSort, setDefaultSort 
 }: SettingsModalProps) => {
 
-  // Funkcja pomocnicza do zapisu
+  // Stan odpowiadający za rozwijanie sekcji Startup Config
+  const [isStartupOpen, setIsStartupOpen] = useState(false);
+
   const updateDefault = (key: string, value: string, setter: (v: string) => void) => {
     localStorage.setItem(key, value);
     setter(value);
@@ -47,8 +50,8 @@ export const SettingsModal = ({
           </button>
         </header>
 
-        <div className="space-y-10">
-          {/* SIATKA */}
+        <div className="space-y-6">
+          {/* SIATKA - Zostawiamy zawsze widoczną jako kluczowe ustawienie */}
           <section>
             <Label icon={<LayoutGrid size={12} />} title="Default Viewport" />
             <div className="grid grid-cols-4 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5">
@@ -66,65 +69,93 @@ export const SettingsModal = ({
 
           <hr className="border-white/5" />
 
-          {/* STARTUP DEFAULTS */}
-          <div className="space-y-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg text-green-500"><Zap size={14} fill="currentColor" /></div>
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em]">Startup Defaults</h4>
-            </div>
-
-            {/* DEFAULT STATUS */}
-            <section>
-              <Label icon={<BookmarkCheck size={12} />} title="Default Status" />
-              <div className="grid grid-cols-3 gap-2">
-                {['ALL', 'MAM', 'SZUKAM'].map(s => (
-                  <button 
-                    key={s}
-                    onClick={() => updateDefault('walkman_default_status', s, setDefaultStatus)}
-                    className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${defaultStatus === s ? 'border-green-500 text-green-500 bg-green-500/5' : 'border-white/5 text-zinc-600'}`}
-                  >
-                    {s === 'SZUKAM' ? 'WISH' : s}
-                  </button>
-                ))}
+          {/* STARTUP DEFAULTS - SEKCJA ROZWIJANA */}
+          <div className="space-y-4">
+            <button
+              onClick={() => setIsStartupOpen(!isStartupOpen)}
+              className="w-full flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg transition-colors ${isStartupOpen ? 'bg-green-500 text-black' : 'bg-green-500/10 text-green-500'}`}>
+                  <Zap size={14} fill={isStartupOpen ? "currentColor" : "none"} />
+                </div>
+                <h4 className="text-[11px] font-black uppercase tracking-[0.2em]">Startup Defaults</h4>
               </div>
-            </section>
+              <motion.div
+                animate={{ rotate: isStartupOpen ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-zinc-500 group-hover:text-white"
+              >
+                <ChevronDown size={18} />
+              </motion.div>
+            </button>
 
-            {/* DEFAULT FORMAT */}
-            <section>
-              <Label icon={<Disc size={12} />} title="Default Format" />
-              <div className="grid grid-cols-4 gap-2">
-                {['ALL', 'FLAC', 'MP3', 'Hi-Res'].map(f => (
-                  <button 
-                    key={f}
-                    onClick={() => updateDefault('walkman_default_format', f, setDefaultFormat)}
-                    className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${defaultFormat === f ? 'border-green-500 text-green-500 bg-green-500/5' : 'border-white/5 text-zinc-600'}`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </section>
+            <AnimatePresence>
+              {isStartupOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-4 pb-2 space-y-8 px-2">
+                    {/* STATUS */}
+                    <section>
+                      <Label icon={<BookmarkCheck size={12} />} title="Default Status" />
+                      <div className="grid grid-cols-3 gap-2">
+                        {['ALL', 'MAM', 'SZUKAM'].map(s => (
+                          <button 
+                            key={s}
+                            onClick={() => updateDefault('walkman_default_status', s, setDefaultStatus)}
+                            className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${defaultStatus === s ? 'border-green-500 text-green-500 bg-green-500/5' : 'border-white/5 text-zinc-600'}`}
+                          >
+                            {s === 'SZUKAM' ? 'WISH' : s}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
 
-            {/* DEFAULT SORT */}
-            <section>
-              <Label icon={<ArrowUpDown size={12} />} title="Default Sort Order" />
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { id: 'recent', label: 'RECENT' },
-                  { id: 'artist', label: 'ARTIST A-Z' },
-                  { id: 'album', label: 'ALBUM A-Z' },
-                  { id: 'year', label: 'YEAR' }
-                ].map(opt => (
-                  <button 
-                    key={opt.id}
-                    onClick={() => updateDefault('walkman_default_sort', opt.id, setDefaultSort)}
-                    className={`py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-tighter border transition-all ${defaultSort === opt.id ? 'border-green-500 text-green-500 bg-green-500/5' : 'border-white/5 text-zinc-600'}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </section>
+                    {/* FORMAT */}
+                    <section>
+                      <Label icon={<Disc size={12} />} title="Default Format" />
+                      <div className="grid grid-cols-4 gap-2">
+                        {['ALL', 'FLAC', 'MP3', 'Hi-Res'].map(f => (
+                          <button 
+                            key={f}
+                            onClick={() => updateDefault('walkman_default_format', f, setDefaultFormat)}
+                            className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${defaultFormat === f ? 'border-green-500 text-green-500 bg-green-500/5' : 'border-white/5 text-zinc-600'}`}
+                          >
+                            {f}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* SORT */}
+                    <section>
+                      <Label icon={<ArrowUpDown size={12} />} title="Default Sort Order" />
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: 'recent', label: 'RECENT' },
+                          { id: 'artist', label: 'ARTIST A-Z' },
+                          { id: 'album', label: 'ALBUM A-Z' },
+                          { id: 'year', label: 'YEAR' }
+                        ].map(opt => (
+                          <button 
+                            key={opt.id}
+                            onClick={() => updateDefault('walkman_default_sort', opt.id, setDefaultSort)}
+                            className={`py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-tighter border transition-all ${defaultSort === opt.id ? 'border-green-500 text-green-500 bg-green-500/5' : 'border-white/5 text-zinc-600'}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <footer className="pt-6 border-t border-white/5">
@@ -138,7 +169,6 @@ export const SettingsModal = ({
   );
 };
 
-// Mały pomocnik dla czystszego kodu
 const Label = ({ icon, title }: { icon: any, title: string }) => (
   <div className="flex items-center gap-2 mb-4 text-zinc-600">
     {icon}
