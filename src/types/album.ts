@@ -11,5 +11,7 @@ export interface Album {
   label?: string;
   created_at?: string;
   tracks?: string;
+  spotify_url?: string; // NOWE
+  youtube_url?: string; // NOWE
   notes?: string;
 }
