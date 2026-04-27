@@ -1,32 +1,39 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* To jest nowe miejsce na Twoją konfigurację (zamiast tailwind.config.js) */
+@theme {
+  --color-brand: #22c55e;
+}
 
 /* Twoje poprawki na Native-feel */
-:root {
-  background-color: #09090b;
-}
+@layer base {
+  :root {
+    background-color: #09090b;
+    color: #ffffff;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #09090b;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #09090b;
+    overflow-x: hidden;
+  }
 
-/* Ukrycie paska */
-* {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-*::-webkit-scrollbar {
-  display: none;
-}
+  /* Ukrycie scrollbara */
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
 
-/* Blokada zoomu na iOS */
-input, select, textarea {
-  font-size: 16px !important;
+  /* Fix dla iOS */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
