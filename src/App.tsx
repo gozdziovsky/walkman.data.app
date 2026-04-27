@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Settings2, Search as SearchIcon, Filter, ArrowUpDown, Disc, BookmarkCheck } from 'lucide-react';
+import { Plus, Settings2, Search as SearchIcon, Filter, X, Disc, BookmarkCheck, ArrowUpDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './lib/supabase';
 import { AddAlbumModal } from './components/AddAlbumModal';
 import { DetailsModal } from './components/DetailsModal';
@@ -13,6 +14,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showFilters, setShowFilters] = useState(false); // Nowy stan dla szuflady filtrów
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   
   const [filterFormat, setFilterFormat] = useState<string>('ALL');
@@ -56,18 +58,20 @@ function App() {
   const stats = useMemo(() => ({
     total: albums.length,
     owned: albums.filter(a => a.status === 'MAM').length,
-    wanted: albums.filter(a => a.status === 'SZUKAM').length
   }), [albums]);
+
+  const activeFiltersCount = (filterFormat !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (sortBy !== 'recent' ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-[#09090b] text-white pb-32">
-      <header className="p-6 pt-12 space-y-8">
+      {/* NAGŁÓWEK - MINIMALIZM POWRACA */}
+      <header className="p-6 pt-12 space-y-6">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none">Walkman<span className="text-green-500">.</span></h1>
             <div className="flex gap-4 mt-4 ml-1">
               <div className="flex flex-col">
-                <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Total</span>
+                <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Archive</span>
                 <span className="text-xs font-mono font-bold text-zinc-400">{stats.total.toString().padStart(2, '0')}</span>
               </div>
               <div className="flex flex-col border-l border-white/5 pl-4">
@@ -76,63 +80,39 @@ function App() {
               </div>
             </div>
           </div>
-          <button onClick={() => setShowSettings(true)} className="p-4 bg-zinc-900/50 rounded-full border border-white/5 text-zinc-500 hover:text-white transition-all"><Settings2 size={20} /></button>
+          
+          <div className="flex gap-2">
+            {/* PRZYCISK FILTRÓW */}
+            <button 
+              onClick={() => setShowFilters(true)} 
+              className={`p-4 rounded-full border transition-all active:scale-90 relative ${activeFiltersCount > 0 ? 'bg-green-500 border-green-500 text-black' : 'bg-zinc-900/50 border-white/5 text-zinc-500'}`}
+            >
+              <Filter size={20} />
+              {activeFiltersCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-black text-[10px] font-black rounded-full flex items-center justify-center border-2 border-[#09090b]">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+            
+            <button onClick={() => setShowSettings(true)} className="p-4 bg-zinc-900/50 rounded-full border border-white/5 text-zinc-500 active:scale-90">
+              <Settings2 size={20} />
+            </button>
+          </div>
         </div>
 
+        {/* SEARCH BAR - ZAWSZE POD RĘKĄ */}
         <div className="relative">
           <div className="absolute inset-y-0 left-4 flex items-center text-zinc-600"><SearchIcon size={16} /></div>
           <input 
-            type="text" placeholder="Search archive..." 
+            type="text" placeholder="Search your digital shelf..." 
             className="w-full bg-zinc-900/40 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold outline-none transition-all placeholder:text-zinc-700 focus:border-white/10"
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
-        <div className="space-y-6">
-          <section>
-            <div className="flex items-center gap-2 mb-3 ml-1 text-zinc-600">
-              <BookmarkCheck size={10} />
-              <span className="text-[8px] font-black uppercase tracking-widest">Collection Status</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <DashboardButton label="ALL" active={filterStatus === 'ALL'} onClick={() => setFilterStatus('ALL')} />
-              <DashboardButton label="OWNED" active={filterStatus === 'MAM'} onClick={() => setFilterStatus('MAM')} activeClass="bg-green-500 text-black border-green-500" />
-              <DashboardButton label="WISH" active={filterStatus === 'SZUKAM'} onClick={() => setFilterStatus('SZUKAM')} activeClass="bg-orange-500 text-black border-orange-500" />
-            </div>
-          </section>
-
-          <section>
-            <div className="flex items-center gap-2 mb-3 ml-1 text-zinc-600">
-              <Disc size={10} />
-              <span className="text-[8px] font-black uppercase tracking-widest">Audio Format</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {['FLAC', 'MP3', 'HI-RES'].map(f => (
-                <DashboardButton 
-                  key={f} 
-                  label={f} 
-                  active={filterFormat === (f === 'HI-RES' ? 'Hi-Res' : f)} 
-                  onClick={() => setFilterFormat(filterFormat === (f === 'HI-RES' ? 'Hi-Res' : f) ? 'ALL' : (f === 'HI-RES' ? 'Hi-Res' : f))} 
-                />
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <div className="flex items-center gap-2 mb-3 ml-1 text-zinc-600">
-              <ArrowUpDown size={10} />
-              <span className="text-[8px] font-black uppercase tracking-widest">Sort Records</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <SortButton label="RECENTLY ADDED" active={sortBy === 'recent'} onClick={() => setSortBy('recent')} />
-              <SortButton label="ARTIST A-Z" active={sortBy === 'artist'} onClick={() => setSortBy('artist')} />
-              <SortButton label="ALBUM A-Z" active={sortBy === 'album'} onClick={() => setSortBy('album')} />
-              <SortButton label="RELEASE YEAR" active={sortBy === 'year'} onClick={() => setSortBy('year')} />
-            </div>
-          </section>
-        </div>
       </header>
 
+      {/* GRID Z ALBUMAMI */}
       <main className="px-4">
         <div className={`grid ${gridConfig[cols]} gap-3 transition-all duration-500`}>
           {processedAlbums.map((album) => (
@@ -150,8 +130,69 @@ function App() {
         </div>
       </main>
 
-      <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-green-500 text-black rounded-full flex items-center justify-center shadow-[0_20px_50px_rgba(34,197,94,0.3)] active:scale-90 transition-transform z-50 border-4 border-[#09090b]"><Plus size={36} strokeWidth={3} /></button>
+      {/* FAB - ADD BUTTON */}
+      <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-green-500 text-black rounded-full flex items-center justify-center shadow-[0_20px_50px_rgba(34,197,94,0.3)] active:scale-90 transition-transform z-50 border-4 border-[#09090b]">
+        <Plus size={36} strokeWidth={3} />
+      </button>
 
+      {/* SZUFLADA FILTRÓW (BOTTOM SHEET) */}
+      <AnimatePresence>
+        {showFilters && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowFilters(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110]" />
+            <motion.div 
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-12 z-[120] shadow-2xl"
+            >
+              <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8" />
+              
+              <div className="space-y-8">
+                {/* STATUS */}
+                <section>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-zinc-500"><BookmarkCheck size={14} /><span className="text-[10px] font-black uppercase tracking-widest">Status</span></div>
+                    {filterStatus !== 'ALL' && <button onClick={() => setFilterStatus('ALL')} className="text-[9px] font-black text-green-500 uppercase">Reset</button>}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <FilterBtn label="ALL" active={filterStatus === 'ALL'} onClick={() => setFilterStatus('ALL')} />
+                    <FilterBtn label="OWNED" active={filterStatus === 'MAM'} onClick={() => setFilterStatus('MAM')} activeClass="bg-green-500 text-black" />
+                    <FilterBtn label="WISH" active={filterStatus === 'SZUKAM'} onClick={() => setFilterStatus('SZUKAM')} activeClass="bg-orange-500 text-black" />
+                  </div>
+                </section>
+
+                {/* FORMAT */}
+                <section>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-zinc-500"><Disc size={14} /><span className="text-[10px] font-black uppercase tracking-widest">Format</span></div>
+                    {filterFormat !== 'ALL' && <button onClick={() => setFilterFormat('ALL')} className="text-[9px] font-black text-green-500 uppercase">Reset</button>}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    <FilterBtn label="ALL" active={filterFormat === 'ALL'} onClick={() => setFilterFormat('ALL')} />
+                    {['FLAC', 'MP3', 'HI-RES'].map(f => (
+                      <FilterBtn key={f} label={f} active={filterFormat === (f === 'HI-RES' ? 'Hi-Res' : f)} onClick={() => setFilterFormat(f === 'HI-RES' ? 'Hi-Res' : f)} />
+                    ))}
+                  </div>
+                </section>
+
+                {/* SORTOWANIE */}
+                <section>
+                  <div className="flex items-center gap-2 mb-4 text-zinc-500"><ArrowUpDown size={14} /><span className="text-[10px] font-black uppercase tracking-widest">Sort by</span></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <SortBtn label="RECENTLY ADDED" active={sortBy === 'recent'} onClick={() => setSortBy('recent')} />
+                    <SortBtn label="ARTIST A-Z" active={sortBy === 'artist'} onClick={() => setSortBy('artist')} />
+                    <SortBtn label="ALBUM A-Z" active={sortBy === 'album'} onClick={() => setSortBy('album')} />
+                    <SortBtn label="RELEASE YEAR" active={sortBy === 'year'} onClick={() => setSortBy('year')} />
+                  </div>
+                </section>
+
+                <button onClick={() => setShowFilters(false)} className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase text-[11px] tracking-widest mt-4">Show Results</button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* RESZTA MODALI */}
       {showSettings && <SettingsModal cols={cols} setCols={setCols} onClose={() => setShowSettings(false)} />}
       {showAddModal && <AddAlbumModal onClose={() => setShowAddModal(false)} onSuccess={fetchAlbums} />}
       {selectedAlbum && <DetailsModal album={selectedAlbum} onClose={() => setSelectedAlbum(null)} onUpdateSuccess={fetchAlbums} />}
@@ -159,13 +200,14 @@ function App() {
   );
 }
 
-const DashboardButton = ({ label, active, onClick, activeClass = 'bg-white text-black border-white' }: any) => (
-  <button onClick={onClick} className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass : 'bg-zinc-900/50 text-zinc-600 border-white/5 hover:border-white/10'}`}>
+// POMOCNICZE KOMPONENTY
+const FilterBtn = ({ label, active, onClick, activeClass = 'bg-white text-black' }: any) => (
+  <button onClick={onClick} className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass + ' border-transparent' : 'bg-zinc-900/50 text-zinc-600 border-white/5'}`}>
     {label}
   </button>
 );
 
-const SortButton = ({ label, active, onClick }: any) => (
+const SortBtn = ({ label, active, onClick }: any) => (
   <button onClick={onClick} className={`py-3 px-4 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border flex items-center justify-center text-center ${active ? 'bg-zinc-800 text-green-500 border-green-500/50' : 'bg-zinc-900/30 text-zinc-600 border-white/5'}`}>
     {label}
   </button>
