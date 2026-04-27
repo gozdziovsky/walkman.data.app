@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, MonitorPlay, Trash2, Loader2, Edit3, Star, Calendar, Music } from 'lucide-react';
+import { X, Play, MonitorPlay, Trash2, Loader2, Edit3, Star, Calendar, Music } from 'lucide-react'; // Usunięto 'Check', 'Disc'
 import { supabase } from '../lib/supabase';
 import type { Album } from '../types/album';
 
