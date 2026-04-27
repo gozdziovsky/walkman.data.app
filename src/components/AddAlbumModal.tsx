@@ -89,69 +89,48 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
         </header>
 
         {/* Sekcja Szukania */}
-        <div className="relative mb-10">
-          <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 focus-within:border-green-500/50 transition-all">
-            <div className="flex items-center pl-3 text-zinc-500"><Search size={16} /></div>
-            <input 
-              className="flex-1 bg-transparent px-2 py-2 outline-none text-sm font-bold placeholder:text-zinc-600" 
-              placeholder="Search iTunes for auto-fill..." 
-              value={query} 
-              onChange={e => setQuery(e.target.value)} 
-              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), search())} 
-            />
-            <button type="button" onClick={search} className="px-5 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-green-500 transition-colors">
-              {searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}
-            </button>
-          </div>
-          
-          {results.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
-              {results.map(r => (
-                <button key={r.collectionId} type="button" onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-white/5 border-b border-white/5 last:border-0 text-left transition-colors">
-                  <img src={r.artworkUrl60} className="w-12 h-12 rounded-lg shadow-lg" alt="" />
-                  <div className="truncate">
-                    <p className="text-xs font-black uppercase truncate text-white">{r.collectionName}</p>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase">{r.artistName}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Sekcja Szukania - Naprawiony Layout */}
+<div className="relative mb-10">
+  <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 focus-within:border-green-500/50 transition-all h-14">
+    {/* Ikona Lupy */}
+    <div className="pl-4 text-zinc-500 shrink-0">
+      <Search size={18} />
+    </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Kontener Okładki */}
-            <div 
-              onClick={() => fileInputRef.current?.click()} 
-              className="w-full md:w-48 aspect-square bg-zinc-800 rounded-[2rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0"
-            >
-              {imagePreview ? (
-                <>
-                  <img src={imagePreview} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <PlusCircle className="text-white" size={32} />
-                  </div>
-                </>
-              ) : (
-                <div className="text-center">
-                  <ImageIcon className="text-zinc-700 mx-auto mb-2" size={32} />
-                  <p className="text-[9px] font-black uppercase text-zinc-600">Upload Cover</p>
-                </div>
-              )}
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept="image/*" 
-                onChange={e => { 
-                  if(e.target.files?.[0]) { 
-                    setImageFile(e.target.files[0]); 
-                    setImagePreview(URL.createObjectURL(e.target.files[0])); 
-                  }
-                }} 
-              />
-            </div>
+    {/* Input - min-w-0 pozwala mu się zwężać na bardzo małych ekranach bez rozwalania przycisku */}
+    <input 
+      className="flex-1 bg-transparent px-2 h-full outline-none text-sm font-bold placeholder:text-zinc-600 min-w-0" 
+      placeholder="Search iTunes for auto-fill..." 
+      value={query} 
+      onChange={e => setQuery(e.target.value)} 
+      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), search())} 
+    />
+
+    {/* Przycisk Find - shrink-0 to klucz, h-full wypełnia p-1 kontenera */}
+    <button 
+      type="button" 
+      onClick={search} 
+      className="shrink-0 h-full px-6 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-green-500 active:scale-95 transition-all"
+    >
+      {searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}
+    </button>
+  </div>
+  
+  {/* Wyniki wyszukiwania - dodajemy lekkie odsunięcie, żeby nie przyklejały się do inputa */}
+  {results.length > 0 && (
+    <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
+      {results.map(r => (
+        <button key={r.collectionId} type="button" onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-white/5 border-b border-white/5 last:border-0 text-left transition-colors">
+          <img src={r.artworkUrl60} className="w-12 h-12 rounded-lg shadow-lg shrink-0" alt="" />
+          <div className="truncate">
+            <p className="text-xs font-black uppercase truncate text-white">{r.collectionName}</p>
+            <p className="text-[10px] text-zinc-500 font-bold uppercase">{r.artistName}</p>
+          </div>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 
             {/* Pola tekstowe */}
             <div className="flex-1 space-y-4">
