@@ -4,87 +4,54 @@
 
 @layer base {
   :root {
-    /* Blokuje domyślne zachowania dotykowe, które mogą powodować zoom */
     touch-action: pan-x pan-y;
     -webkit-tap-highlight-color: transparent;
   }
 
   html, body {
-    /* Blokujemy przesuwanie całego "płótna" strony (tzw. rubber-banding na iOS) */
-    position: fixed;
-    overflow: hidden;
+    /* Zamiast position: fixed, używamy bezpieczniejszego overflow: hidden */
+    margin: 0;
+    padding: 0;
     width: 100%;
     height: 100%;
-    
-    /* Wygląd kursora i tekstu */
+    height: 100dvh; 
+    overflow: hidden;
     background-color: #09090b;
     color: #f4f4f5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    
-    /* Blokada automatycznego powiększania tekstu */
     -webkit-text-size-adjust: 100%;
   }
 
   #root {
     width: 100%;
     height: 100%;
-    /* Przenosimy scrollowanie tutaj - dzięki temu pasek boczny zniknie, a treść zostanie */
+    height: 100dvh;
+    /* To tutaj dzieje się cała magia scrollowania */
     overflow-y: auto;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch; /* Płynność na iOS */
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* UKRYWANIE PASKA SCROLLOWANIA */
-  /* Chrome, Safari, Opera */
-  #root::-webkit-scrollbar,
-  ::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Firefox */
+  /* UKRYWANIE SCROLLBARA (Wersja Totalna) */
   * {
-    scrollbar-width: none;
-    -ms-overflow-style: none; /* IE / Edge */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
   }
 
-  /* FIX DLA INPUTÓW NA iOS */
+  *::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  /* Blokada zoomu przy kliknięciu w inputy */
   input, select, textarea {
-    /* Musi być min. 16px, inaczej iOS zrobi zoom przy kliknięciu */
     font-size: 16px !important;
   }
-
-  /* Wyłączenie zaznaczania tekstu na przyciskach (wygląda bardziej PRO) */
-  button {
-    user-select: none;
-    -webkit-user-select: none;
-  }
 }
 
-/* POMOCNICZE KLASY DLA "NOTCHA" (Górna wysepka w iPhone) */
-.safe-top {
-  padding-top: env(safe-area-inset-top);
+/* Klasa pomocnicza dla poziomego scrolla (np. filtry) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* CUSTOMOWE ANIMACJE (Dla Twojego Walkmana) */
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 8s linear infinite;
-}
-
-/* Ukrywanie poziomego scrolla w chipsach (filtrach) */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
