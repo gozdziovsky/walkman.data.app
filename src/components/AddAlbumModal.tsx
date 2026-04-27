@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Search, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Image as ImageIcon, Loader2 } from 'lucide-react'; // Usunięto 'Search'
 import { supabase } from '../lib/supabase';
 import type { Album } from '../types/album';
 
@@ -83,7 +83,10 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
               {results.map(r => (
                 <button key={r.collectionId} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-white/5 border-b border-white/5 last:border-0 text-left">
                   <img src={r.artworkUrl60} className="w-10 h-10 rounded-lg" />
-                  <div className="truncate"><p className="text-xs font-black uppercase truncate">{r.collectionName}</p><p className="text-[10px] text-zinc-500 font-bold uppercase">{r.artistName}</p></div>
+                  <div className="truncate">
+                    <p className="text-xs font-black uppercase truncate">{r.collectionName}</p>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase">{r.artistName}</p>
+                  </div>
                 </button>
               ))}
             </div>
