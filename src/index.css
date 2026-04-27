@@ -1,10 +1,25 @@
 @import "tailwindcss";
 
-:root { --bg: #09090b; --accent: #1db954; }
+:root {
+  /* Blokuje domyślne zachowania dotykowe, które mogą powodować zoom */
+  touch-action: pan-x pan-y;
+}
 
-body {
-  background: var(--bg);
-  color: white;
-  font-family: 'Inter', sans-serif;
-  margin: 0;
+html, body {
+  position: fixed; /* Zapobiega przypadkowemu przewijaniu "poza" krawędzie na iOS */
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  -webkit-text-size-adjust: none; /* Blokuje automatyczne powiększanie tekstu w poziomie */
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto; /* Pozwala na przewijanie tylko wewnątrz głównego kontenera */
+  -webkit-overflow-scrolling: touch; /* Włącza płynne przewijanie typu "inertia" na iOS */
+}
+
+input, select, textarea {
+  font-size: 16px !important; /* iOS automatycznie przybliża ekran, gdy focusujesz input < 16px */
 }
