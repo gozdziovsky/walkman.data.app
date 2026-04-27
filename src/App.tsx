@@ -64,58 +64,62 @@ function App() {
   return (
     <div className="min-h-screen bg-[#09090b] text-white pb-32">
       
-      {/* NAGŁÓWEK - REFINED & SYMMETRICAL */}
-      <header className="px-8 pt-16 space-y-8">
-        <div className="flex justify-between items-center"> {/* items-center dla idealnego wyrównania w pionie */}
-          <div>
-            <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none select-none">
-              Walkman<span className="text-green-500">.</span>
-            </h1>
-            <div className="flex gap-5 mt-4 ml-1">
-              <div className="flex flex-col">
-                <span className="text-[7px] font-black text-zinc-600 uppercase tracking-[0.2em] leading-tight">Archive</span>
-                <span className="text-sm font-mono font-bold text-zinc-400">{stats.total.toString().padStart(2, '0')}</span>
-              </div>
-              <div className="flex flex-col border-l border-white/5 pl-5">
-                <span className="text-[7px] font-black text-zinc-600 uppercase tracking-[0.2em] leading-tight">Owned</span>
-                <span className="text-sm font-mono font-bold text-green-500">{stats.owned.toString().padStart(2, '0')}</span>
-              </div>
+      {/* NAGŁÓWEK - CENTRALNY UKŁAD */}
+      <header className="px-6 pt-12 space-y-6">
+        
+        {/* LOGO - NA ŚRODKU, POD WYSEPKA */}
+        <div className="flex flex-col items-center justify-center pt-4">
+          <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none select-none">
+            Walkman<span className="text-green-500">.</span>
+          </h1>
+          <p className="text-[8px] font-black text-zinc-700 uppercase tracking-[0.5em] mt-3">Digital Audio Archive</p>
+        </div>
+
+        {/* PASEK FUNKCYJNY - LICZNIKI + BUTTONY OBOK SIEBIE */}
+        <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-6 shadow-2xl">
+          
+          {/* LEWA: LICZNIKI */}
+          <div className="flex gap-6">
+            <div className="flex flex-col">
+              <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest leading-tight">Total</span>
+              <span className="text-sm font-mono font-bold text-zinc-300">{stats.total.toString().padStart(2, '0')}</span>
+            </div>
+            <div className="flex flex-col border-l border-white/10 pl-6">
+              <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest leading-tight text-green-500/50">Owned</span>
+              <span className="text-sm font-mono font-bold text-green-500">{stats.owned.toString().padStart(2, '0')}</span>
             </div>
           </div>
-          
-          {/* CONTROL CLUSTER - Tutaj dzieje się magia symetrii */}
-          <div className="flex items-center bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-full p-1.5 shadow-2xl">
+
+          {/* PRAWA: PRZYCISKI FILTRACJI I USTAWIEŃ */}
+          <div className="flex items-center gap-1">
             <button 
               onClick={() => setShowFilters(true)} 
-              className={`p-3.5 rounded-full transition-all active:scale-90 relative group ${activeFiltersCount > 0 ? 'bg-green-500 text-black shadow-[0_0_20px_rgba(34,197,94,0.3)]' : 'text-zinc-500 hover:text-white'}`}
+              className={`p-4 rounded-full transition-all active:scale-90 relative ${activeFiltersCount > 0 ? 'bg-green-500 text-black shadow-lg shadow-green-500/20' : 'text-zinc-500 hover:text-white'}`}
             >
               <Filter size={18} />
               {activeFiltersCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-white text-black text-[8px] font-black rounded-full flex items-center justify-center border-2 border-[#09090b]">
+                <span className="absolute top-2 right-2 w-4 h-4 bg-white text-black text-[8px] font-black rounded-full flex items-center justify-center border-2 border-[#09090b]">
                   {activeFiltersCount}
                 </span>
               )}
             </button>
-            
-            <div className="w-px h-4 bg-white/10 mx-1" /> {/* Subtelny separator */}
-            
             <button 
               onClick={() => setShowSettings(true)} 
-              className="p-3.5 rounded-full text-zinc-500 hover:text-white transition-all active:scale-90"
+              className="p-4 rounded-full text-zinc-500 hover:text-white transition-all active:scale-90"
             >
               <Settings2 size={18} />
             </button>
           </div>
         </div>
 
-        {/* SEARCH BAR - Bardziej "płaski" i zintegrowany */}
+        {/* WYSZUKIWARKA */}
         <div className="relative">
           <div className="absolute inset-y-0 left-5 flex items-center text-zinc-600">
             <SearchIcon size={14} />
           </div>
           <input 
-            type="text" placeholder="Quick search..." 
-            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.25rem] py-4 pl-12 pr-6 text-sm font-bold outline-none transition-all placeholder:text-zinc-700 focus:bg-zinc-900/60 focus:border-white/10"
+            type="text" placeholder="Search archive..." 
+            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-6 text-sm font-bold outline-none transition-all placeholder:text-zinc-700 focus:bg-zinc-900/60 focus:border-white/10"
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
@@ -125,7 +129,7 @@ function App() {
       <main className="px-6 mt-4">
         {processedAlbums.length === 0 ? (
           <div className="py-24 text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-700 italic">No records found</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-800 italic">Empty Shelf</p>
           </div>
         ) : (
           <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`}>
@@ -133,13 +137,13 @@ function App() {
               <div 
                 key={album.id} 
                 onClick={() => setSelectedAlbum(album)} 
-                className="group relative aspect-square bg-zinc-900 rounded-[1.5rem] overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                className="group relative aspect-square bg-zinc-900 rounded-[1.8rem] overflow-hidden cursor-pointer active:scale-95 transition-transform"
               >
-                <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
+                <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
                 
                 {cols <= 2 && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-5 flex flex-col justify-end">
-                    <p className="text-[8px] font-black uppercase text-green-500 tracking-widest leading-none mb-1.5">{album.artist}</p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end">
+                    <p className="text-[8px] font-black uppercase text-green-500 tracking-widest leading-none mb-1.5 italic">{album.artist}</p>
                     <p className="text-xs font-bold truncate uppercase tracking-tighter">{album.title}</p>
                   </div>
                 )}
@@ -151,7 +155,7 @@ function App() {
         )}
       </main>
 
-      {/* FAB - Bardziej minimalistyczny */}
+      {/* GŁÓWNY PRZYCISK DODAWANIA */}
       <button 
         onClick={() => setShowAddModal(true)} 
         className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-green-500 text-black rounded-full flex items-center justify-center shadow-[0_20px_40px_rgba(34,197,94,0.3)] active:scale-90 transition-transform z-50 border-[6px] border-[#09090b]"
@@ -159,7 +163,7 @@ function App() {
         <Plus size={36} strokeWidth={3} />
       </button>
 
-      {/* MODALE - SZUFLADA FILTRÓW */}
+      {/* MODALE (FILTRY WYSZUKIWANE Z DOŁU) */}
       <AnimatePresence>
         {showFilters && (
           <>
@@ -178,7 +182,6 @@ function App() {
                     <FilterBtn label="WISH" active={filterStatus === 'SZUKAM'} onClick={() => setFilterStatus('SZUKAM')} activeClass="bg-orange-500 text-black" />
                   </div>
                 </section>
-
                 <section>
                   <FilterLabel icon={<Disc size={14} />} title="Format" />
                   <div className="grid grid-cols-4 gap-3">
@@ -188,7 +191,6 @@ function App() {
                     ))}
                   </div>
                 </section>
-
                 <section>
                   <FilterLabel icon={<ArrowUpDown size={14} />} title="Sort by" />
                   <div className="grid grid-cols-2 gap-3">
@@ -198,15 +200,13 @@ function App() {
                     <SortBtn label="RELEASE YEAR" active={sortBy === 'year'} onClick={() => setSortBy('year')} />
                   </div>
                 </section>
-
-                <button onClick={() => setShowFilters(false)} className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase text-xs tracking-widest mt-4 active:scale-95 transition-transform">Close & Filter</button>
+                <button onClick={() => setShowFilters(false)} className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase text-xs tracking-widest mt-4">Done</button>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* POZOSTAŁE MODALE */}
       {showSettings && (
         <SettingsModal 
           cols={cols} setCols={setCols} 
@@ -223,7 +223,7 @@ function App() {
 }
 
 const FilterBtn = ({ label, active, onClick, activeClass = 'bg-white text-black' }: any) => (
-  <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass + ' border-transparent shadow-lg' : 'bg-zinc-800/30 text-zinc-500 border-white/5'}`}>
+  <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass + ' border-transparent' : 'bg-zinc-800/30 text-zinc-500 border-white/5'}`}>
     {label}
   </button>
 );
@@ -235,9 +235,9 @@ const SortBtn = ({ label, active, onClick }: any) => (
 );
 
 const FilterLabel = ({ icon, title }: any) => (
-  <div className="flex items-center gap-2 mb-5 text-zinc-500">
+  <div className="flex items-center gap-2 mb-5 text-zinc-500 border-b border-white/5 pb-2">
     {icon}
-    <span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none">{title}</span>
+    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{title}</span>
   </div>
 );
 
