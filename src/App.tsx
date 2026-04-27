@@ -53,7 +53,7 @@ export default function App() {
     });
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-green-500/30">
+    <div className="min-h-full w-full bg-[#09090b] text-zinc-100 selection:bg-green-500/30">
       
       {/* HEADER SECTION */}
       <header className="pt-16 pb-8 px-6 max-w-7xl mx-auto flex flex-col items-center">
