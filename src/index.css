@@ -2,42 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    touch-action: pan-x pan-y;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    min-height: 100%;
-    /* Używamy min-h zamiast stałego h, żeby treść mogła rosnąć */
-    background-color: #09090b; /* OLED Black */
-    color: #f4f4f5;
-    -webkit-text-size-adjust: 100%;
-    /* Blokujemy zoom systemowy, ale nie blokujemy renderowania */
-    overscroll-behavior-y: none;
-  }
-
-  /* UKRYWANIE SCROLLBARA (Wersja która nie psuje układu) */
-  * {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  *::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Fix dla iOS - zapobiega przybliżaniu przy klikaniu w pola */
-  input, select, textarea {
-    font-size: 16px !important;
-  }
+:root {
+  background-color: #09090b;
+  color: #ffffff;
+  /* Blokuje zoom na iPhone */
+  touch-action: manipulation;
 }
 
-/* Klasa dla płynnych obrazków */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  background-color: #09090b;
+  /* Pozwalamy na naturalny scroll, ukrywamy tylko pasek */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Zapobiega przybliżaniu przy klikaniu w pola na iOS */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Naprawa dla grafik, żeby nie "skakały" */
 img {
-  -webkit-user-drag: none;
-  user-select: none;
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
