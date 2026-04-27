@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Image as ImageIcon, Loader2, Link as LinkIcon, Music } from 'lucide-react';
+import { X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Album } from '../types/album';
 
@@ -39,7 +39,7 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
       coverUrl: img, 
       genre: item.primaryGenreName, 
       year: new Date(item.releaseDate).getFullYear(),
-      spotify_url: item.collectionViewUrl // iTunes link jako backup lub punkt wyjścia
+      spotify_url: item.collectionViewUrl 
     });
     setImagePreview(img);
     setResults([]);
@@ -60,7 +60,7 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
       if (error) throw error;
       onSuccess(); onClose();
     } catch (err) { 
-      alert('Error saving. Make sure SQL columns exist!'); 
+      alert('Error saving album'); 
     } finally { setLoading(false); }
   };
 
@@ -73,7 +73,6 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
           <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-500"><X size={20} /></button>
         </header>
 
-        {/* SEARCH SECTION */}
         <div className="relative mb-8">
           <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5 focus-within:border-green-500/50 transition-all">
             <input className="flex-1 bg-transparent px-4 py-2 outline-none text-sm font-bold" placeholder="Auto-fill via iTunes..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), search())} />
@@ -97,7 +96,6 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
           <div className="flex flex-col md:flex-row gap-8">
             <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-48 aspect-square bg-zinc-800 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0">
               {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover group-hover:opacity-40 transition-opacity" /> : <ImageIcon className="text-zinc-700" size={32} />}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase">Upload</div>
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); setImagePreview(URL.createObjectURL(e.target.files[0])); }}} />
             </div>
 
@@ -111,29 +109,23 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
             </div>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-white/5">
-             <div className="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-500 mb-2"><LinkIcon size={12} /> Streaming Links</div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold focus:border-green-500" placeholder="Spotify URL" value={form.spotify_url} onChange={e => setForm({...form, spotify_url: e.target.value})} />
-                <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold focus:border-red-500/50" placeholder="YouTube URL" value={form.youtube_url} onChange={e => setForm({...form, youtube_url: e.target.value})} />
-             </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold focus:border-green-500" placeholder="Spotify URL" value={form.spotify_url} onChange={e => setForm({...form, spotify_url: e.target.value})} />
+            <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold" placeholder="YouTube URL" value={form.youtube_url} onChange={e => setForm({...form, youtube_url: e.target.value})} />
           </div>
 
-          <div className="space-y-2">
-             <div className="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-500 mb-2"><Music size={12} /> Tracklist</div>
-             <textarea className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold min-h-[100px] outline-none focus:border-white/20" placeholder="1. Song One&#10;2. Song Two..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
-          </div>
+          <textarea className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs font-bold min-h-[100px] outline-none" placeholder="Tracklist..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
 
           <div className="flex gap-4">
-            <select className="flex-1 bg-zinc-800 rounded-xl px-4 py-4 text-[11px] font-black uppercase outline-none" value={form.format} onChange={e => setForm({...form, format: e.target.value as any})}>
+            <select className="flex-1 bg-zinc-800 rounded-xl px-4 py-4 text-[11px] font-black uppercase" value={form.format} onChange={e => setForm({...form, format: e.target.value as any})}>
               <option value="FLAC">FLAC</option><option value="CD">CD</option><option value="MP3">MP3</option><option value="Hi-Res">Hi-Res</option>
             </select>
-            <select className="flex-1 bg-zinc-800 rounded-xl px-4 py-4 text-[11px] font-black uppercase text-green-500 outline-none" value={form.status} onChange={e => setForm({...form, status: e.target.value as any})}>
+            <select className="flex-1 bg-zinc-800 rounded-xl px-4 py-4 text-[11px] font-black uppercase text-green-500" value={form.status} onChange={e => setForm({...form, status: e.target.value as any})}>
               <option value="MAM">In Library</option><option value="SZUKAM">Wishlist</option>
             </select>
           </div>
 
-          <button disabled={loading} type="submit" className="w-full py-5 bg-green-500 text-black rounded-3xl font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-green-500/10 active:scale-95 transition-all">
+          <button disabled={loading} type="submit" className="w-full py-5 bg-green-500 text-black rounded-3xl font-black uppercase tracking-widest text-[11px] active:scale-95 transition-all">
             {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Save Vibe to Cloud'}
           </button>
         </form>
