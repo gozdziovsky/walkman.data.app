@@ -82,8 +82,6 @@ function App() {
     owned: albums.filter(a => a.status === 'MAM').length,
   }), [albums]);
 
-  const activeFiltersCount = (filterFormat !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (sortBy !== 'recent' ? 1 : 0);
-
   return (
     <div className="min-h-screen bg-[#09090b] text-white pb-32">
       
@@ -113,21 +111,17 @@ function App() {
             </div>
           </div>
 
-          {/* PRZYCISKI FUNKCYJNE */}
+          {/* PRZYCISKI FUNKCYJNE - ZAWSZE TAKIE SAME WIZUALNIE */}
           <div className="flex items-center gap-1">
             <button 
               onClick={() => setShowFilters(true)} 
-              className={`p-4 rounded-full transition-all active:scale-90 relative ${activeFiltersCount > 0 ? 'bg-green-500 text-black shadow-lg shadow-green-500/20' : 'text-zinc-500 hover:text-white'}`}
+              className="p-4 rounded-full bg-zinc-900/50 border border-transparent text-zinc-500 hover:text-white transition-all active:scale-90"
             >
               <Filter size={18} />
-              {/* Dyskretna kropka wskaźnika aktywności */}
-              {activeFiltersCount > 0 && (
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-white rounded-full border-2 border-[#09090b]" />
-              )}
             </button>
             <button 
               onClick={() => setShowSettings(true)} 
-              className="p-4 rounded-full text-zinc-500 hover:text-white transition-all active:scale-90"
+              className="p-4 rounded-full bg-zinc-900/50 border border-transparent text-zinc-500 hover:text-white transition-all active:scale-90"
             >
               <Settings2 size={18} />
             </button>
@@ -170,7 +164,6 @@ function App() {
                   </div>
                 )}
                 
-                {/* Dioda statusu z poświatą */}
                 <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full ${album.status === 'MAM' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
               </div>
             ))}
