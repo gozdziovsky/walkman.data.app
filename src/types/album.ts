@@ -1,17 +1,16 @@
 export interface Album {
   id: string;
+  created_at?: string;
   artist: string;
   title: string;
-  coverUrl: string;
+  coverUrl: string; // To pole musi mieć duże 'U', bo tak daliśmy w cudzysłowie w SQL
+  genre?: string;
+  year?: number;
   format: 'FLAC' | 'MP3' | 'Hi-Res' | 'CD' | '-';
   status: 'MAM' | 'SZUKAM';
-  year?: number;
-  genre?: string;
   rating?: number;
-  label?: string;
-  created_at?: string;
+  spotify_url?: string;
+  youtube_url?: string;
   tracks?: string;
-  spotify_url?: string; // NOWE
-  youtube_url?: string; // NOWE
   notes?: string;
 }
