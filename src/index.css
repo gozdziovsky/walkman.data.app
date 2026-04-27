@@ -4,30 +4,26 @@
   :root {
     background-color: #09090b;
     color: #ffffff;
-    /* Blokuje tylko zoom przy "tapowaniu", nie psuje układu */
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  html, body {
+  html, body, #root {
     margin: 0;
     padding: 0;
     width: 100%;
     min-height: 100%;
     background-color: #09090b;
+    /* Płynne przewijanie bez pasków */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
-  /* BEZPIECZNE UKRYCIE SCROLLBARA */
-  /* To nie psuje layoutu, tylko sprawia, że pasek jest niewidoczny */
-  * {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+  body::-webkit-scrollbar {
+    display: none;
   }
 
-  *::-webkit-scrollbar {
-    display: none; /* Chrome/Safari/Opera */
-  }
-
-  /* Zapobiega zoomowaniu na iOS przy kliknięciu w input */
+  /* Zapobiega zoomowaniu na iOS */
   input, select, textarea {
     font-size: 16px !important;
   }
