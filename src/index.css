@@ -9,49 +9,35 @@
   }
 
   html, body {
-    /* Zamiast position: fixed, używamy bezpieczniejszego overflow: hidden */
     margin: 0;
     padding: 0;
     width: 100%;
-    height: 100%;
-    height: 100dvh; 
-    overflow: hidden;
-    background-color: #09090b;
+    min-height: 100%;
+    /* Używamy min-h zamiast stałego h, żeby treść mogła rosnąć */
+    background-color: #09090b; /* OLED Black */
     color: #f4f4f5;
     -webkit-text-size-adjust: 100%;
+    /* Blokujemy zoom systemowy, ale nie blokujemy renderowania */
+    overscroll-behavior-y: none;
   }
 
-  #root {
-    width: 100%;
-    height: 100%;
-    height: 100dvh;
-    /* To tutaj dzieje się cała magia scrollowania */
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* UKRYWANIE SCROLLBARA (Wersja Totalna) */
+  /* UKRYWANIE SCROLLBARA (Wersja która nie psuje układu) */
   * {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
-
   *::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
   }
 
-  /* Blokada zoomu przy kliknięciu w inputy */
+  /* Fix dla iOS - zapobiega przybliżaniu przy klikaniu w pola */
   input, select, textarea {
     font-size: 16px !important;
   }
 }
 
-/* Klasa pomocnicza dla poziomego scrolla (np. filtry) */
-.no-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Klasa dla płynnych obrazków */
+img {
+  -webkit-user-drag: none;
+  user-select: none;
 }
