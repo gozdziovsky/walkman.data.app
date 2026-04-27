@@ -31,9 +31,10 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           title: r.collectionName,
           artist: r.artistName,
           coverUrl: r.artworkUrl100.replace('100x100', '800x800'),
-          year: new Date(r.releaseDate).getFullYear(),
+          year: r.releaseDate ? new Date(r.releaseDate).getFullYear() : '',
           genre: r.primaryGenreName,
-          spotify_url: r.collectionViewUrl
+          // USUNIĘTO: r.collectionViewUrl (nie chcemy linków do Apple Music)
+          spotify_url: '' 
         })));
       } else {
         if (!discogsToken) { alert("Add Discogs Token in Settings!"); return; }
@@ -46,7 +47,8 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
             artist: artist.trim(),
             coverUrl: r.cover_image,
             year: r.year || '',
-            genre: r.genre?.[0] || ''
+            genre: r.genre?.[0] || '',
+            spotify_url: ''
           };
         }));
       }
@@ -54,7 +56,15 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
   };
 
   const handleSelect = (item: any) => {
-    setForm({ ...form, artist: item.artist, title: item.title, coverUrl: item.coverUrl, genre: item.genre, year: parseInt(item.year) || form.year, spotify_url: item.spotify_url || '' });
+    setForm({ 
+      ...form, 
+      artist: item.artist, 
+      title: item.title, 
+      coverUrl: item.coverUrl, 
+      genre: item.genre, 
+      year: parseInt(item.year) || form.year, 
+      spotify_url: '' // Zawsze czyścimy przy wyborze z bazy
+    });
     setImagePreview(item.coverUrl);
     setResults([]);
   };
@@ -79,29 +89,40 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
       <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="bg-zinc-900 w-full max-w-2xl rounded-t-[3rem] md:rounded-[3rem] p-8 md:p-12 overflow-y-auto max-h-[92vh] border-t border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
         <header className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-black uppercase italic italic text-white">Add <span className="text-green-500">Record</span></h2>
+          <h2 className="text-3xl font-black uppercase italic text-white">Add <span className="text-green-500">Record</span></h2>
           <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500"><X size={20} /></button>
         </header>
 
         <div className="relative mb-10">
-          <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 h-14">
+          <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 h-14 focus-within:border-green-500/50 transition-colors">
             <div className="pl-4 text-zinc-500 shrink-0"><Search size={18} /></div>
-            <input className="flex-1 bg-transparent px-2 h-full outline-none text-sm font-bold placeholder:text-zinc-700" placeholder={`Search via ${searchSource.toUpperCase()}...`} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
+            <input className="flex-1 bg-transparent px-2 h-full outline-none text-sm font-bold placeholder:text-zinc-700 text-white" placeholder={`Search via ${searchSource.toUpperCase()}...`} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
             <button type="button" onClick={search} className={`shrink-0 h-full px-6 rounded-xl font-black uppercase text-[10px] transition-all ${searchSource === 'itunes' ? 'bg-white text-black' : 'bg-blue-500 text-white'}`}>{searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}</button>
           </div>
           {results.length > 0 && (
             <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
-              {results.map((r, i) => <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-white/5 border-b border-white/5 text-left"><img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover" alt="" /><div className="truncate"><p className="text-xs font-black uppercase truncate text-white">{r.title}</p><p className="text-[10px] text-zinc-500 font-bold uppercase">{r.artist}</p></div></button>)}
+              {results.map((r, i) => (
+                <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-white/5 border-b border-white/5 text-left group transition-colors">
+                  <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover shadow-lg" alt="" />
+                  <div className="truncate">
+                    <p className="text-xs font-black uppercase truncate text-white group-hover:text-green-500 transition-colors">{r.title}</p>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase">{r.artist}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col md:flex-row gap-8">
-            <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-48 aspect-square bg-zinc-800 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0">{imagePreview ? <img src={imagePreview} className="w-full h-full object-cover" alt="" /> : <div className="text-center"><ImageIcon className="text-zinc-700 mx-auto mb-2" size={32} /><p className="text-[9px] font-black uppercase text-zinc-600">Manual Cover</p></div>}<input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); setImagePreview(URL.createObjectURL(e.target.files[0])); } }} /></div>
+            <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-48 aspect-square bg-zinc-800 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0">
+              {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover" alt="" /> : <div className="text-center"><ImageIcon className="text-zinc-700 mx-auto mb-2" size={32} /><p className="text-[9px] font-black uppercase text-zinc-600">Manual Cover</p></div>}
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); setImagePreview(URL.createObjectURL(e.target.files[0])); } }} />
+            </div>
             <div className="flex-1 space-y-4">
-              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Artist</label><input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-green-500/50" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} /></div>
-              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Title</label><input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-green-500/50" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Artist</label><input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-green-500/50 text-white" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} /></div>
+              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-500 ml-1">Title</label><input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-green-500/50 text-white" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
             </div>
           </div>
           <button disabled={loading} type="submit" className="w-full py-5 bg-green-500 text-black rounded-3xl font-black uppercase tracking-widest text-[11px] hover:bg-white active:scale-95 transition-all shadow-xl shadow-green-500/10">Save Record</button>
