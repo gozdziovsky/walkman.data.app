@@ -62,7 +62,6 @@ function App() {
   return (
     <div className="min-h-screen bg-[#09090b] text-white pb-32">
       <header className="p-6 pt-12 space-y-8">
-        {/* LOGO & SETTINGS */}
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none">Walkman<span className="text-green-500">.</span></h1>
@@ -77,10 +76,9 @@ function App() {
               </div>
             </div>
           </div>
-          <button onClick={() => setShowSettings(true)} className="p-4 bg-zinc-900/50 rounded-full border border-white/5 text-zinc-500"><Settings2 size={20} /></button>
+          <button onClick={() => setShowSettings(true)} className="p-4 bg-zinc-900/50 rounded-full border border-white/5 text-zinc-500 hover:text-white transition-all"><Settings2 size={20} /></button>
         </div>
 
-        {/* SEARCH BAR */}
         <div className="relative">
           <div className="absolute inset-y-0 left-4 flex items-center text-zinc-600"><SearchIcon size={16} /></div>
           <input 
@@ -90,9 +88,7 @@ function App() {
           />
         </div>
 
-        {/* DASHBOARD FILTRÓW - WSZYSTKO WIDOCZNE */}
         <div className="space-y-6">
-          {/* SEKCJA: STATUS */}
           <section>
             <div className="flex items-center gap-2 mb-3 ml-1 text-zinc-600">
               <BookmarkCheck size={10} />
@@ -105,14 +101,13 @@ function App() {
             </div>
           </section>
 
-          {/* SEKCJA: FORMAT */}
           <section>
             <div className="flex items-center gap-2 mb-3 ml-1 text-zinc-600">
               <Disc size={10} />
               <span className="text-[8px] font-black uppercase tracking-widest">Audio Format</span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {['FLAC', 'CD', 'MP3', 'HI-RES'].map(f => (
+            <div className="grid grid-cols-3 gap-2">
+              {['FLAC', 'MP3', 'HI-RES'].map(f => (
                 <DashboardButton 
                   key={f} 
                   label={f} 
@@ -123,7 +118,6 @@ function App() {
             </div>
           </section>
 
-          {/* SEKCJA: SORTOWANIE */}
           <section>
             <div className="flex items-center gap-2 mb-3 ml-1 text-zinc-600">
               <ArrowUpDown size={10} />
@@ -139,7 +133,6 @@ function App() {
         </div>
       </header>
 
-      {/* GRID Z ALBUMAMI */}
       <main className="px-4">
         <div className={`grid ${gridConfig[cols]} gap-3 transition-all duration-500`}>
           {processedAlbums.map((album) => (
@@ -166,25 +159,14 @@ function App() {
   );
 }
 
-// NOWE KOMPONENTY PRZYCISKÓW DLA DASHBOARDU
 const DashboardButton = ({ label, active, onClick, activeClass = 'bg-white text-black border-white' }: any) => (
-  <button 
-    onClick={onClick}
-    className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
-      active ? activeClass : 'bg-zinc-900/50 text-zinc-600 border-white/5 hover:border-white/10'
-    }`}
-  >
+  <button onClick={onClick} className={`py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass : 'bg-zinc-900/50 text-zinc-600 border-white/5 hover:border-white/10'}`}>
     {label}
   </button>
 );
 
 const SortButton = ({ label, active, onClick }: any) => (
-  <button 
-    onClick={onClick}
-    className={`py-3 px-4 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border flex items-center justify-center text-center ${
-      active ? 'bg-zinc-800 text-green-500 border-green-500/50' : 'bg-zinc-900/30 text-zinc-600 border-white/5'
-    }`}
-  >
+  <button onClick={onClick} className={`py-3 px-4 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border flex items-center justify-center text-center ${active ? 'bg-zinc-800 text-green-500 border-green-500/50' : 'bg-zinc-900/30 text-zinc-600 border-white/5'}`}>
     {label}
   </button>
 );
