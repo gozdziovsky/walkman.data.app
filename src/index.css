@@ -12,18 +12,17 @@
     margin: 0;
     padding: 0;
     width: 100%;
-    min-height: 100%;
+    height: 100%;
     background-color: #09090b;
-    /* Płynne przewijanie bez pasków */
+    /* Ukrycie paska scrollowania */
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
 
-  body::-webkit-scrollbar {
+  *::-webkit-scrollbar {
     display: none;
   }
 
-  /* Zapobiega zoomowaniu na iOS */
   input, select, textarea {
     font-size: 16px !important;
   }
