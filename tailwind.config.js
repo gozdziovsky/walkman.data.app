@@ -2,7 +2,7 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,ts,jsx,tsx}", // To mówi Tailwindowi: "Zajrzyj tutaj i znajdź klasy!"
   ],
   theme: {
     extend: {},
