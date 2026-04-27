@@ -64,7 +64,10 @@ export const AddAlbumModal = ({ onClose, onSuccess }: { onClose: () => void, onS
       const { error } = await supabase.from('albums').insert([url === form.coverUrl ? form : { ...form, coverUrl: url }]);
       if (error) throw error;
       onSuccess(); onClose();
-    } catch (err) { alert('Error: Check Supabase SQL and Storage policies'); } finally { setLoading(false); }
+   } catch (err: any) { 
+  console.error(err);
+  alert('BŁĄD: ' + (err.message || 'Nieznany błąd')); 
+}
   };
 
   return (
