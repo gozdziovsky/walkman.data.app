@@ -20,17 +20,15 @@ import type { Album } from './types/album';
 type SortOption = 'recent' | 'artist' | 'album' | 'year';
 
 function App() {
-  // --- 1. STANY DANYCH ---
+  // --- 1. DANE I MODALE ---
   const [albums, setAlbums] = useState<Album[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
-
-  // --- 2. STANY MODALI ---
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // --- 3. MOTYW KOLORYSTYCZNY ---
+  // --- 2. MOTYW (DYNAMICZNY) ---
   const [themeColor, setThemeColor] = useState<string>(() => 
     localStorage.getItem('walkman_theme_color') || '#22c55e'
   );
@@ -40,12 +38,12 @@ function App() {
     localStorage.setItem('walkman_theme_color', themeColor);
   }, [themeColor]);
 
-  // --- 4. KONFIGURACJA BIEŻĄCA (Widok) ---
+  // --- 3. KONFIGURACJA WIDOKU (SESJA) ---
   const [filterFormat, setFilterFormat] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
-  // --- 5. KONFIGURACJA DOMYŚLNA (Startup) ---
+  // --- 4. KONFIGURACJA DOMYŚLNA (STARTUP) ---
   const [defaultFormat, setDefaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
   const [defaultStatus, setDefaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
   const [defaultSort, setDefaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
@@ -65,18 +63,13 @@ function App() {
 
   const gridConfig: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
 
-  // --- 6. EFEKT: BLOKADA SCROLLA TŁA ---
+  // --- 5. EFEKTY I SYNC ---
   useEffect(() => {
     const isAnyModalOpen = showAddModal || showSettings || showFilters || !!selectedAlbum;
     document.body.style.overflow = isAnyModalOpen ? 'hidden' : 'unset';
     document.body.style.height = isAnyModalOpen ? '100vh' : 'unset';
-    return () => {
-      document.body.style.overflow = 'unset';
-      document.body.style.height = 'unset';
-    };
   }, [showAddModal, showSettings, showFilters, selectedAlbum]);
 
-  // --- 7. INICJALIZACJA ---
   useEffect(() => {
     fetchAlbums();
     setFilterFormat(defaultFormat);
@@ -84,14 +77,12 @@ function App() {
     setSortBy(defaultSort);
   }, []);
 
-  useEffect(() => { localStorage.setItem('walkman_cols', cols.toString()); }, [cols]);
-
   const fetchAlbums = async () => {
     const { data } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
     if (data) setAlbums(data);
   };
 
-  // --- 8. LOGIKA PRZETWARZANIA LISTY ---
+  // --- 6. LOGIKA PRZETWARZANIA ---
   const processedAlbums = useMemo(() => {
     let result = [...albums];
     if (searchTerm) {
@@ -117,13 +108,13 @@ function App() {
   const stats = useMemo(() => ({
     total: albums.length,
     owned: albums.filter(a => a.status === 'MAM').length,
+    wanted: albums.filter(a => a.status === 'SZUKAM').length,
   }), [albums]);
 
-  const activeFiltersCount = (filterFormat !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (sortBy !== (localStorage.getItem('walkman_default_sort') || 'recent') ? 1 : 0);
+  const activeFiltersCount = (filterFormat !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (sortBy !== defaultSort ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white pb-32 selection-brand">
-      {/* STYLE DYNAMICZNEGO MOTYWU */}
+    <div className="min-h-screen bg-[#09090b] text-white pb-32">
       <style>{`
         :root { --brand-color: ${themeColor}; }
         .text-brand { color: var(--brand-color) !important; }
@@ -138,23 +129,27 @@ function App() {
           <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none select-none">
             Walkman<span className="text-brand">.</span>
           </h1>
-          <p className="text-[8px] font-black text-zinc-700 uppercase tracking-[0.5em] mt-3 leading-none">Digital Audio Archive</p>
+          <p className="text-[8px] font-black text-zinc-700 uppercase tracking-[0.5em] mt-3">Digital Audio Archive</p>
         </div>
 
-        {/* DASHBOARD */}
+        {/* DASHBOARD (3 KOLUMNY) */}
         <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-6 shadow-2xl">
-          <div className="flex gap-6 text-left">
-            <div className="flex flex-col">
+          <div className="flex gap-5 text-left overflow-x-auto no-scrollbar py-1">
+            <div className="flex flex-col shrink-0">
               <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest mb-1 leading-none">Total</span>
               <span className="text-sm font-mono font-bold text-zinc-300">{stats.total.toString().padStart(2, '0')}</span>
             </div>
-            <div className="flex flex-col border-l border-white/10 pl-6">
+            <div className="flex flex-col border-l border-white/10 pl-5 shrink-0">
               <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest mb-1 text-brand opacity-50 leading-none">Owned</span>
               <span className="text-sm font-mono font-bold text-brand">{stats.owned.toString().padStart(2, '0')}</span>
             </div>
+            <div className="flex flex-col border-l border-white/10 pl-5 shrink-0">
+              <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest mb-1 text-orange-500 opacity-50 leading-none">Wanted</span>
+              <span className="text-sm font-mono font-bold text-orange-500">{stats.wanted.toString().padStart(2, '0')}</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0 ml-2">
             <button onClick={() => setShowFilters(true)} className="p-4 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90 relative">
               <Filter size={18} />
               {activeFiltersCount > 0 && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-brand rounded-full border-2 border-[#09090b]" />}
@@ -167,25 +162,15 @@ function App() {
 
         {/* WYSZUKIWARKA */}
         <div className="relative">
-          <div className="absolute inset-y-0 left-5 flex items-center text-zinc-600">
-            <SearchIcon size={14} />
-          </div>
+          <div className="absolute inset-y-0 left-5 flex items-center text-zinc-600"><SearchIcon size={14} /></div>
           <input 
-            type="text" 
-            placeholder="Search archive..." 
-            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none transition-all placeholder:text-zinc-700 focus:bg-zinc-900/60 focus:border-brand/30" 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
+            type="text" placeholder="Search archive..." 
+            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none transition-all focus:bg-zinc-900/60 focus:border-brand/30" 
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} 
           />
           <AnimatePresence>
             {searchTerm && (
-              <motion.button 
-                initial={{ opacity: 0, scale: 0.8 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                exit={{ opacity: 0, scale: 0.8 }} 
-                onClick={() => setSearchTerm('')} 
-                className="absolute inset-y-0 right-5 flex items-center text-zinc-600 hover:text-brand transition-colors"
-              >
+              <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-5 flex items-center text-zinc-600 hover:text-brand transition-colors">
                 <X size={16} strokeWidth={3} />
               </motion.button>
             )}
@@ -193,46 +178,34 @@ function App() {
         </div>
       </header>
 
-      {/* GŁÓWNY GRID ALBUMÓW */}
       <main className="px-6 mt-4">
-        {processedAlbums.length === 0 ? (
-          <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.4em] italic">No records found</p></div>
-        ) : (
-          <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`}>
-            {processedAlbums.map((album) => (
-              <div 
-                key={album.id} 
-                onClick={() => setSelectedAlbum(album)} 
-                className="group relative aspect-square bg-zinc-900 rounded-[1.8rem] overflow-hidden cursor-pointer active:scale-95 transition-transform"
-              >
-                <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
-                
-                {/* IKONKA TRACKLISTY (LEWY GÓRNY RÓG) */}
-                {album.tracks && (
-                  <div className="absolute top-4 left-4 text-white/50 bg-black/40 backdrop-blur-md p-1.5 rounded-full shadow-lg z-10">
-                    <ListMusic size={12} />
-                  </div>
-                )}
-
-                {cols <= 2 && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none">
-                    <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
-                    <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
-                  </div>
-                )}
-                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full z-10 ${album.status === 'MAM' ? 'bg-brand shadow-[0_0_10px_var(--brand-color)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
-              </div>
-            ))}
-          </div>
-        )}
+        <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`}>
+          {processedAlbums.map((album) => (
+            <div key={album.id} onClick={() => setSelectedAlbum(album)} className="group relative aspect-square bg-zinc-900 rounded-[1.8rem] overflow-hidden cursor-pointer active:scale-95 transition-transform">
+              <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
+              {album.tracks && (
+                <div className="absolute top-4 left-4 text-white/50 bg-black/40 backdrop-blur-md p-1.5 rounded-full shadow-lg z-10">
+                  <ListMusic size={12} />
+                </div>
+              )}
+              {cols <= 2 && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none">
+                  <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
+                  <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
+                </div>
+              )}
+              <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full z-10 ${album.status === 'MAM' ? 'bg-brand shadow-[0_0_10px_var(--brand-color)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
+            </div>
+          ))}
+        </div>
       </main>
 
-      {/* PRZYCISK DODAWANIA (FAB) */}
+      {/* PRZYCISK FAB */}
       <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-brand text-black rounded-full flex items-center justify-center shadow-2xl shadow-brand/30 active:scale-90 transition-transform z-50 border-[6px] border-[#09090b]">
         <Plus size={36} strokeWidth={3} />
       </button>
 
-      {/* SZUFLADA FILTRÓW (BIEŻĄCA SESJA) */}
+      {/* FILTRY (DRAWER) */}
       <AnimatePresence>
         {showFilters && (
           <>
@@ -258,74 +231,43 @@ function App() {
                 <section>
                   <FilterLabel icon={<ArrowUpDown size={14} />} title="Sort by" />
                   <div className="grid grid-cols-2 gap-3">
-                    <SortBtn label="RECENTLY ADDED" active={sortBy === 'recent'} onClick={() => setSortBy('recent')} />
-                    <SortBtn label="ARTIST A-Z" active={sortBy === 'artist'} onClick={() => setSortBy('artist')} />
-                    <SortBtn label="ALBUM A-Z" active={sortBy === 'album'} onClick={() => setSortBy('album')} />
-                    <SortBtn label="RELEASE YEAR" active={sortBy === 'year'} onClick={() => setSortBy('year')} />
+                    <SortBtn label="RECENTLY" active={sortBy === 'recent'} onClick={() => setSortBy('recent')} />
+                    <SortBtn label="ARTIST" active={sortBy === 'artist'} onClick={() => setSortBy('artist')} />
+                    <SortBtn label="ALBUM" active={sortBy === 'album'} onClick={() => setSortBy('album')} />
+                    <SortBtn label="YEAR" active={sortBy === 'year'} onClick={() => setSortBy('year')} />
                   </div>
                 </section>
-                <button onClick={() => setShowFilters(false)} className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase text-xs tracking-widest mt-4">Done</button>
+                <button onClick={() => setShowFilters(false)} className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase text-xs tracking-widest mt-4 shadow-xl">Done</button>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* MODAL USTAWIENIA (STARTUP DEFAULTS) - NAPRAWIONY */}
+      {/* MODAL USTAWIENIA */}
       {showSettings && (
         <SettingsModal 
           cols={cols} setCols={setCols} 
           themeColor={themeColor} setThemeColor={setThemeColor}
-          defaultFormat={defaultFormat} 
-          setDefaultFormat={(v) => { 
-            localStorage.setItem('walkman_default_format', v); 
-            setDefaultFormat(v); 
-          }}
-          defaultStatus={defaultStatus} 
-          setDefaultStatus={(v) => { 
-            localStorage.setItem('walkman_default_status', v); 
-            setDefaultStatus(v); 
-          }}
-          defaultSort={defaultSort} 
-          setDefaultSort={(v: any) => { 
-            localStorage.setItem('walkman_default_sort', v); 
-            setDefaultSort(v); 
-          }}
+          defaultFormat={defaultFormat} setDefaultFormat={(v) => { localStorage.setItem('walkman_default_format', v); setDefaultFormat(v); }}
+          defaultStatus={defaultStatus} setDefaultStatus={(v) => { localStorage.setItem('walkman_default_status', v); setDefaultStatus(v); }}
+          defaultSort={defaultSort} setDefaultSort={(v: any) => { localStorage.setItem('walkman_default_sort', v); setDefaultSort(v); }}
           searchSource={searchSource} setSearchSource={setSearchSource}
           discogsToken={discogsToken} setDiscogsToken={setDiscogsToken}
           onClose={() => setShowSettings(false)} 
         />
       )}
 
-      {/* MODAL DODAWANIA */}
-      {showAddModal && (
-        <AddAlbumModal 
-          searchSource={searchSource} 
-          discogsToken={discogsToken} 
-          onClose={() => setShowAddModal(false)} 
-          onSuccess={fetchAlbums} 
-        />
-      )}
-      
-      {/* MODAL DETALI */}
-      {selectedAlbum && (
-        <DetailsModal 
-          album={selectedAlbum} 
-          onClose={() => setSelectedAlbum(null)} 
-          onUpdateSuccess={fetchAlbums}
-          onArtistClick={(name: string) => {
-            setSearchTerm(name);
-            setSelectedAlbum(null);
-          }}
-        />
-      )}
+      {/* MODAL DODAWANIA I DETALI */}
+      {showAddModal && <AddAlbumModal searchSource={searchSource} discogsToken={discogsToken} onClose={() => setShowAddModal(false)} onSuccess={fetchAlbums} />}
+      {selectedAlbum && <DetailsModal album={selectedAlbum} onClose={() => setSelectedAlbum(null)} onUpdateSuccess={fetchAlbums} onArtistClick={(n:string)=>{setSearchTerm(n);setSelectedAlbum(null);}} />}
     </div>
   );
 }
 
-// POMOCNICZE KOMPONENTY UI
+// POMOCNICZE
 const FilterBtn = ({ label, active, onClick, activeClass = 'bg-white text-black' }: any) => (
-  <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass + ' border-transparent' : 'bg-zinc-800/30 text-zinc-500 border-white/5'}`}>{label}</button>
+  <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass + ' border-transparent shadow-lg' : 'bg-zinc-800/30 text-zinc-500 border-white/5'}`}>{label}</button>
 );
 const SortBtn = ({ label, active, onClick }: any) => (
   <button onClick={onClick} className={`py-4 px-4 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border flex items-center justify-center text-center ${active ? 'bg-zinc-800 text-brand border-brand/50 shadow-inner' : 'bg-zinc-800/20 text-zinc-600 border-white/5'}`}>{label}</button>

@@ -16,8 +16,8 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
   const [form, setForm] = useState({
     artist: '', title: '', coverUrl: '', genre: '',
     year: new Date().getFullYear(), format: 'FLAC' as Album['format'], 
-    status: 'MAM' as Album['status'], rating: 0,
-    spotify_url: '', youtube_url: '', tracks: ''
+    status: 'MAM' as Album['status'], 
+    rating: 0, spotify_url: '', youtube_url: '', tracks: ''
   });
 
   const search = async () => {
@@ -32,7 +32,7 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           title: r.collectionName, artist: r.artistName,
           coverUrl: r.artworkUrl100.replace('100x100', '800x800'),
           year: r.releaseDate ? new Date(r.releaseDate).getFullYear() : '',
-          genre: r.primaryGenreName, spotify_url: '' 
+          genre: r.primaryGenreName
         })));
       } else {
         if (!discogsToken) return;
@@ -40,7 +40,7 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
         const data = await res.json();
         setResults(data.results.map((r: any) => {
           const [artist, title] = r.title.includes(' - ') ? r.title.split(' - ') : ['Unknown', r.title];
-          return { title: title.trim(), artist: artist.trim(), coverUrl: r.cover_image, year: r.year || '', genre: r.genre?.[0] || '', spotify_url: '' };
+          return { title: title.trim(), artist: artist.trim(), coverUrl: r.cover_image, year: r.year || '', genre: r.genre?.[0] || '' };
         }));
       }
     } finally { setSearching(false); }
@@ -56,9 +56,7 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
         const songs = data.results.filter((r: any) => r.wrapperType === 'track');
         fetchedTracks = songs.map((s: any) => `${s.trackNumber}. ${s.trackName}`).join('\n');
       }
-    } catch (e) {
-      console.error("Tracklist fetch failed", e);
-    }
+    } catch (e) { console.error("Tracklist fetch failed", e); }
 
     setForm({ ...form, artist: item.artist, title: item.title, coverUrl: item.coverUrl, genre: item.genre, year: parseInt(item.year) || form.year, tracks: fetchedTracks });
     setImagePreview(item.coverUrl);
@@ -89,43 +87,18 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
         </header>
 
-        {/* PANCERNY I RESPONSYWNY PASEK WYSZUKIWANIA */}
         <div className="relative mb-10 group w-full">
           <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all shadow-inner h-14 w-full">
-            {/* Ikona Lupy */}
-            <div className="flex items-center justify-center pl-5 text-zinc-600 shrink-0">
-              <Search size={18} />
-            </div>
-            
-            {/* Pole Tekstowe */}
-            <input 
-              className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700 min-w-0" 
-              placeholder={`Search via ${searchSource.toUpperCase()}...`} 
-              value={query} 
-              onChange={(e) => setQuery(e.target.value)} 
-              onKeyDown={(e) => e.key === 'Enter' && search()} 
-            />
-            
-            {/* Przycisk Find - Teraz z zakazem zmniejszania (shrink-0) */}
-            <button 
-              type="button" 
-              onClick={search} 
-              className="px-6 md:px-10 bg-white hover:bg-brand text-black font-black uppercase text-[11px] tracking-widest transition-colors active:scale-95 shrink-0 flex items-center justify-center"
-            >
-              {searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}
-            </button>
+            <div className="flex items-center justify-center pl-5 text-zinc-600 shrink-0"><Search size={18} /></div>
+            <input className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700 min-w-0" placeholder={`Search via ${searchSource.toUpperCase()}...`} value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} />
+            <button type="button" onClick={search} className="px-6 md:px-10 bg-white hover:bg-brand text-black font-black uppercase text-[11px] tracking-widest transition-colors active:scale-95 shrink-0">{searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}</button>
           </div>
-
-          {/* LISTA WYNIKÓW */}
           {results.length > 0 && (
             <div className="absolute top-full mt-3 left-0 right-0 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
               {results.map((r, i) => (
                 <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-brand/10 text-left border-b border-white/5 last:border-0 text-white transition-colors group">
                   <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover shadow-lg" alt="" />
-                  <div className="truncate">
-                    <p className="text-xs font-black uppercase truncate group-hover:text-brand transition-colors">{r.title}</p>
-                    <p className="text-[10px] text-zinc-500 uppercase font-bold">{r.artist}</p>
-                  </div>
+                  <div className="truncate"><p className="text-xs font-black uppercase truncate group-hover:text-brand transition-colors">{r.title}</p><p className="text-[10px] text-zinc-500 uppercase font-bold">{r.artist}</p></div>
                 </button>
               ))}
             </div>
@@ -139,13 +112,22 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); setImagePreview(URL.createObjectURL(e.target.files[0])); } }} />
             </div>
             <div className="flex-1 space-y-5">
-              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Artist Name</label><input required className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} /></div>
-              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Album Title</label><input required className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Artist Name</label><input required className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} /></div>
+              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Album Title</label><input required className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
             </div>
           </div>
+
+          <div className="space-y-1">
+            <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Initial Status</label>
+            <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded-2xl border border-white/5 h-14">
+              <button type="button" onClick={() => setForm({...form, status: 'MAM'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'MAM' ? 'bg-brand text-black' : 'text-zinc-600'}`}>Owned</button>
+              <button type="button" onClick={() => setForm({...form, status: 'SZUKAM'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'SZUKAM' ? 'bg-orange-500 text-black' : 'text-zinc-600'}`}>Wanted</button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Genre</label><input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} /></div>
-            <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Release Year</label><input type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all" value={form.year} onChange={e => setForm({...form, year: parseInt(e.target.value)})} /></div>
+            <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Genre</label><input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} /></div>
+            <div className="space-y-1"><label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Year</label><input type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50" value={form.year} onChange={e => setForm({...form, year: parseInt(e.target.value)})} /></div>
           </div>
           <button type="submit" disabled={loading} className="w-full py-6 bg-brand text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-white active:scale-[0.98] transition-all shadow-2xl shadow-brand/20 disabled:opacity-50">
             {loading ? 'Archiving...' : 'Save Record'}
