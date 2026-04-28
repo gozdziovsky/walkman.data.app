@@ -18,6 +18,8 @@ import { DetailsModal } from './components/DetailsModal';
 import { SettingsModal } from './components/SettingsModal';
 import type { Album } from './types/album';
 
+import grooveShelfLogo from './assets/grooveshelf_logo.png';
+
 type SortOption = 'recent' | 'artist' | 'album' | 'year';
 
 const getOptimizedCover = (url: string, quality: 'grid' | 'full') => {
@@ -144,12 +146,13 @@ function App() {
 
       {/* ZMIANA: Dodano max-w-[1800px] i mx-auto w-full, żeby kontrolować szerokość na dużych monitorach */}
       <header className="px-6 pt-12 space-y-6 max-w-[1800px] mx-auto w-full">
-        <div className="flex flex-col items-center justify-center pt-4">
-          <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none select-none">
-            Walkman<span className="text-brand">.</span>
-          </h1>
-          <p className="text-[8px] font-black text-zinc-700 uppercase tracking-[0.5em] mt-3 leading-none">Digital Audio Archive</p>
-        </div>
+      <div className="flex flex-col items-center justify-center pt-10 pb-6"> 
+      <img 
+    src={grooveShelfLogo} 
+    alt="GrooveShelf Logo"
+    className="w-full max-w-[320px] md:max-w-[480px] h-auto object-contain select-none"
+  />
+</div>
 
         <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-4 shadow-2xl">
           <div className="flex gap-1 text-left overflow-x-auto no-scrollbar items-center">
