@@ -27,7 +27,6 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
   const [direction, setDirection] = useState(0); 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Synchronizacja stanu przy zmianie albumu (nawigacja swipe)
   useEffect(() => {
     setForm({ ...album });
     setImagePreview(album.coverUrl);
@@ -35,7 +34,6 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
     setShowTracks(false);
   }, [album]);
 
-  // Zaawansowane mapowanie artystów
   const renderArtists = (artistString: string) => {
     const exceptions = ["Tyler, The Creator", "Earth, Wind & Fire", "Blood, Sweat & Tears"];
     let tempPath = artistString;
@@ -110,7 +108,6 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
     }
   };
 
-  // Warianty animacji dla przejść Next/Prev
   const variants = {
     enter: (direction: number) => ({ x: direction > 0 ? 300 : -300, opacity: 0 }),
     center: { x: 0, opacity: 1 },
@@ -120,12 +117,10 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
       
-      {/* Przycisk Prev (Desktop) */}
       {onPrev && !isEdit && (
         <button onClick={(e) => { e.stopPropagation(); setDirection(-1); onPrev(); }} className="hidden md:flex absolute left-10 p-5 text-white/20 hover:text-brand transition-colors"><ChevronLeft size={48} /></button>
       )}
       
-      {/* Przycisk Next (Desktop) */}
       {onNext && !isEdit && (
         <button onClick={(e) => { e.stopPropagation(); setDirection(1); onNext(); }} className="hidden md:flex absolute right-10 p-5 text-white/20 hover:text-brand transition-colors"><ChevronRight size={48} /></button>
       )}
@@ -140,12 +135,17 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         drag={!isEdit ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.5}
-        dragDirectionLock={true} // <-- BLOKADA GESTÓW UKOŚNYCH DLA MODALU
+        dragElastic={0.2} // Zmniejszona elastyczność (mniej "pływa" przy małym ruchu)
+        dragDirectionLock={true} 
         onDragEnd={(_, info) => {
-          const swipe = Math.abs(info.offset.x) * info.velocity.x;
-          if (swipe < -500 && onNext) { setDirection(1); onNext(); }
-          else if (swipe > 500 && onPrev) { setDirection(-1); onPrev(); }
+          // NOWA LOGIKA GESTÓW (Mniej wrażliwa)
+          const isFlick = Math.abs(info.velocity.x) > 500;
+          const isLongDrag = Math.abs(info.offset.x) > 150; // Wymaga przesunięcia o min. 150px
+          
+          if (isFlick || isLongDrag) {
+            if (info.offset.x < 0 && onNext) { setDirection(1); onNext(); }
+            else if (info.offset.x > 0 && onPrev) { setDirection(-1); onPrev(); }
+          }
         }}
         className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative" 
         onClick={e => e.stopPropagation()}
@@ -154,7 +154,6 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
         {/* LEWA STRONA: OKŁADKA / TRACKLISTA */}
         <div className="w-full md:w-1/2 aspect-square relative bg-zinc-950 shrink-0 overflow-hidden">
           
-          {/* Tracklista (Spód) */}
           {!isEdit && album.tracks && (
             <div className="absolute inset-0 bg-zinc-950 p-8 overflow-y-auto no-scrollbar z-0 flex flex-col">
                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
@@ -168,22 +167,27 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
             </div>
           )}
 
-          {/* Okładka (Wierzch, Interaktywna) */}
           <motion.div 
             className="absolute inset-0 z-10 bg-zinc-800"
             drag={!isEdit && album.tracks ? "y" : false}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragDirectionLock={true} // <-- BLOKADA GESTÓW UKOŚNYCH DLA OKŁADKI
+            dragElastic={0.2} // Zmniejszona elastyczność
+            dragDirectionLock={true} 
             onDragEnd={(_, info) => { 
-              if (info.offset.y < -50 && album.tracks) setShowTracks(true); 
-              if (info.offset.y > 50) setShowTracks(false); 
+              // NOWA LOGIKA GESTÓW PIONOWYCH (Tracklista)
+              const isFlickY = Math.abs(info.velocity.y) > 500;
+              const isLongDragY = Math.abs(info.offset.y) > 120; // Wymaga wyraźnego przeciągnięcia
+              
+              if (isFlickY || isLongDragY) {
+                if (info.offset.y < 0 && album.tracks) setShowTracks(true); // Pociągnij w górę
+                else if (info.offset.y > 0) setShowTracks(false); // Pociągnij w dół
+              }
             }}
             animate={{ y: showTracks ? '-100%' : '0%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           >
             <img src={imagePreview || album.coverUrl} className={`w-full h-full object-cover transition-opacity ${isEdit ? 'opacity-30 blur-sm' : 'opacity-100'}`} alt="" />
             
-            {/* Overlay edycji okładki */}
             {isEdit && (
               <div className="absolute inset-0 flex flex-col items-center justify-center p-8 gap-4">
                 <button onClick={() => fileInputRef.current?.click()} className="bg-white text-black px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-brand transition-colors shadow-2xl">
@@ -204,15 +208,13 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               </div>
             )}
 
-            {/* Swipe up hint */}
             {!isEdit && album.tracks && !showTracks && (
                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-70 animate-bounce pointer-events-none">
-                 <ChevronUp size={24} className="text-white drop-shadow-lg" />
-                 <span className="text-[8px] font-black uppercase tracking-widest text-white drop-shadow-lg mt-1">Tracks</span>
+                 <ChevronUp size={24} className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]" />
+                 <span className="text-[8px] font-black uppercase tracking-widest text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] mt-1">Tracks</span>
                </div>
             )}
 
-            {/* Controls (Top Left) */}
             {!showTracks && (
               <div className="absolute top-6 left-6 flex gap-3 z-20">
                 {!isEdit ? (
@@ -223,7 +225,6 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               </div>
             )}
 
-            {/* Close Button (Top Right) */}
             {!showTracks && (
               <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-6 right-6 p-4 bg-black/40 backdrop-blur-md rounded-full text-white z-20 active:scale-90 hover:bg-white hover:text-black transition-all"><X size={20} /></button>
             )}
