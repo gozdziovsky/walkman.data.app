@@ -150,12 +150,11 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
         animate="center"
         exit="exit"
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        drag={!isEdit} // <--- GŁÓWNA ZMIANA: Drag działa w obu osiach (X i Y)
+        drag={!isEdit} 
         dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={0.2} 
         dragDirectionLock={true} 
         onDragEnd={(_, info) => {
-          // Rozpoznajemy, czy ruch był głównie w poziomie czy w pionie
           const isHorizontal = Math.abs(info.offset.x) > Math.abs(info.offset.y);
 
           if (isHorizontal) {
@@ -167,23 +166,20 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               else if (info.offset.x > 0 && onPrev) { setDirection(-1); onPrev(); }
             }
           } else {
-            // --- GESTY PIONOWE NA KARCIE ---
-            if (info.offset.y > 0) { // Tylko ruch w dół
+            if (info.offset.y > 0) { 
               const isFlickY = info.velocity.y > 500;
               const isLongDragY = info.offset.y > 150;
               if (isFlickY || isLongDragY) {
-                if (showTracks) setShowTracks(false); // Zamknij tracklistę, jeśli otwarta
-                else onClose(); // Zamknij całą kartę
+                if (showTracks) setShowTracks(false); 
+                else onClose(); 
               }
             }
           }
         }}
-        // <--- ZMIANA WYSOKOŚCI: Sztywne h-[95vh] na telefonie (zawsze zajmuje pełną wyznaczoną wysokość)
         className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row h-[95vh] md:h-auto md:max-h-[95vh] shadow-2xl relative transform-gpu will-change-transform" 
         onClick={e => e.stopPropagation()}
       >
         
-        {/* Uchwyt (Pill) dla mobilnego zamykania (Podpowiedź wizualna) */}
         {!isEdit && (
           <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-white/30 backdrop-blur-md rounded-full z-50 md:hidden pointer-events-none" />
         )}
@@ -206,7 +202,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
 
           <motion.div 
             className="absolute inset-0 z-10 bg-zinc-800"
-            drag={!isEdit ? "y" : false} // <--- Okładka zawsze przyjmuje drag góra/dół
+            drag={!isEdit ? "y" : false} 
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0.2} 
             dragDirectionLock={true} 
@@ -216,10 +212,10 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               
               if (isFlickY || isLongDragY) {
                 if (info.offset.y < 0 && album.tracks) {
-                  setShowTracks(true); // Otwórz tracklistę (Swipe Up)
+                  setShowTracks(true); 
                 } else if (info.offset.y > 0) {
-                  if (showTracks) setShowTracks(false); // Zamknij tracklistę (Swipe Down)
-                  else onClose(); // Zamknij kartę (Swipe Down na okładce)
+                  if (showTracks) setShowTracks(false); 
+                  else onClose(); 
                 }
               }
             }}
@@ -349,30 +345,33 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               </motion.div>
             ) : (
               
-              /* TRYB WIDOKU */
+              /* --- TRYB WIDOKU --- */
               <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
                 <div>
-                  <p className="text-brand font-black uppercase tracking-widest text-[10px] mb-4 italic leading-none flex flex-wrap">
-                    {renderArtists(album.artist)}
-                  </p>
                   
-                  <div className="flex justify-between items-start gap-4">
-                    <h2 className={`${getTitleClass(album.title)} font-black uppercase tracking-tighter italic leading-[0.9] mb-8 min-w-0 flex-1 break-normal`}>
-                      {album.title}
-                    </h2>
+                  {/* --- NOWY UKŁAD: Artysta i Badges w jednym rzędzie --- */}
+                  <div className="flex justify-between items-start gap-4 mb-6">
+                    <p className="text-brand font-black uppercase tracking-widest text-[10px] italic leading-none flex flex-wrap flex-1 pt-1">
+                      {renderArtists(album.artist)}
+                    </p>
                     
-                    <div className="flex flex-col items-end gap-2 shrink-0 mt-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       {album.rating > 0 && (
-                        <div className="flex items-center gap-1 bg-brand text-black px-3 py-1 rounded-lg shadow-lg shadow-brand/20">
+                        <div className="flex items-center gap-1 bg-brand text-black px-3 py-1.5 rounded-lg shadow-lg shadow-brand/20">
                           <Star size={12} fill="black" />
-                          <span className="text-xs font-black">{album.rating}/10</span>
+                          <span className="text-xs font-black leading-none">{album.rating}/10</span>
                         </div>
                       )}
-                      <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${album.status === 'MAM' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'}`}>
+                      <div className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest leading-none flex items-center ${album.status === 'MAM' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'}`}>
                         {album.status === 'MAM' ? 'In Library' : 'On Wishlist'}
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Tytuł ma teraz pełną szerokość i łamie słowa (break-words) tylko w skrajnych przypadkach */}
+                  <h2 className={`${getTitleClass(album.title)} font-black uppercase tracking-tighter italic leading-[0.9] mb-8 break-words w-full`}>
+                    {album.title}
+                  </h2>
                   
                   <div className="flex flex-wrap gap-3">
                     <span className="px-4 py-2 bg-zinc-800 rounded-full text-[10px] font-black uppercase flex items-center gap-2">
