@@ -46,9 +46,9 @@ function App() {
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
   // --- 5. KONFIGURACJA DOMYŚLNA (Startup) ---
-  const [defaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
-  const [defaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
-  const [defaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
+  const [defaultFormat, setDefaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
+  const [defaultStatus, setDefaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
+  const [defaultSort, setDefaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
 
   const [cols, setCols] = useState<number>(() => {
     const saved = localStorage.getItem('walkman_cols');
@@ -209,18 +209,18 @@ function App() {
                 
                 {/* IKONKA TRACKLISTY (LEWY GÓRNY RÓG) */}
                 {album.tracks && (
-                  <div className="absolute top-4 left-4 text-white/50 bg-black/40 backdrop-blur-md p-1.5 rounded-full shadow-lg">
+                  <div className="absolute top-4 left-4 text-white/50 bg-black/40 backdrop-blur-md p-1.5 rounded-full shadow-lg z-10">
                     <ListMusic size={12} />
                   </div>
                 )}
 
                 {cols <= 2 && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none">
                     <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
                     <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
                   </div>
                 )}
-                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full ${album.status === 'MAM' ? 'bg-brand shadow-[0_0_10px_var(--brand-color)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
+                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full z-10 ${album.status === 'MAM' ? 'bg-brand shadow-[0_0_10px_var(--brand-color)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
               </div>
             ))}
           </div>
@@ -232,7 +232,7 @@ function App() {
         <Plus size={36} strokeWidth={3} />
       </button>
 
-      {/* SZUFLADA FILTRÓW */}
+      {/* SZUFLADA FILTRÓW (BIEŻĄCA SESJA) */}
       <AnimatePresence>
         {showFilters && (
           <>
@@ -271,17 +271,26 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* MODAL USTAWIENIA */}
+      {/* MODAL USTAWIENIA (STARTUP DEFAULTS) - NAPRAWIONY */}
       {showSettings && (
         <SettingsModal 
           cols={cols} setCols={setCols} 
           themeColor={themeColor} setThemeColor={setThemeColor}
           defaultFormat={defaultFormat} 
-          setDefaultFormat={(v) => { localStorage.setItem('walkman_default_format', v); }}
+          setDefaultFormat={(v) => { 
+            localStorage.setItem('walkman_default_format', v); 
+            setDefaultFormat(v); 
+          }}
           defaultStatus={defaultStatus} 
-          setDefaultStatus={(v) => { localStorage.setItem('walkman_default_status', v); }}
+          setDefaultStatus={(v) => { 
+            localStorage.setItem('walkman_default_status', v); 
+            setDefaultStatus(v); 
+          }}
           defaultSort={defaultSort} 
-          setDefaultSort={(v: any) => { localStorage.setItem('walkman_default_sort', v); }}
+          setDefaultSort={(v: any) => { 
+            localStorage.setItem('walkman_default_sort', v); 
+            setDefaultSort(v); 
+          }}
           searchSource={searchSource} setSearchSource={setSearchSource}
           discogsToken={discogsToken} setDiscogsToken={setDiscogsToken}
           onClose={() => setShowSettings(false)} 
