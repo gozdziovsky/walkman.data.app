@@ -14,7 +14,6 @@
     * **Gesture-driven navigation:** Swipe left/right for browsing, swipe up for tracklists, and swipe down to close.
     * **Corner Ribbons:** Minimalist status indicators (Owned/Wishlist) and tracklist presence.
 * **Visual Excellence:**
-    * **Dark & Normal Modes:** From deep "Amoled" black to soft, matte macOS-style light mode.
     * **On-the-fly Compression:** Uses `wsrv.nl` and Apple CDN to load lightweight thumbnails in the grid, fetching high-res covers only when needed.
 * **System Health:** Real-time connection monitoring for Supabase and Discogs API.
 
