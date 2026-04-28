@@ -17,7 +17,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // --- 1. KONFIGURACJA BIEŻĄCA (Tylko dla sesji, nie zapisuje się sama) ---
+  // --- 1. KONFIGURACJA BIEŻĄCA (Tymczasowa dla widoku) ---
   const [filterFormat, setFilterFormat] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
@@ -42,10 +42,8 @@ function App() {
 
   const gridConfig: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
 
-  // --- ŁADOWANIE USTAWIEŃ PRZY STARCIE ---
   useEffect(() => {
     fetchAlbums();
-    // Przy starcie ustawiamy filtry bieżące na takie, jakie są domyślne
     setFilterFormat(defaultFormat);
     setFilterStatus(defaultStatus);
     setSortBy(defaultSort);
@@ -121,34 +119,29 @@ function App() {
       </header>
 
       <main className="px-6 mt-4">
-        {processedAlbums.length === 0 ? (
-          <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.4em] italic">No records found</p></div>
-        ) : (
-          <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`}>
-            {processedAlbums.map((album) => (
-              <div key={album.id} onClick={() => setSelectedAlbum(album)} className="group relative aspect-square bg-zinc-900 rounded-[1.8rem] overflow-hidden cursor-pointer active:scale-95 transition-transform">
-                <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
-                {cols <= 2 && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left">
-                    <p className="text-[8px] font-black uppercase text-green-500 tracking-widest leading-none mb-1.5 italic">{album.artist}</p>
-                    <p className="text-xs font-bold truncate uppercase tracking-tighter">{album.title}</p>
-                  </div>
-                )}
-                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full ${album.status === 'MAM' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
-              </div>
-            ))}
-          </div>
-        )}
+        <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`}>
+          {processedAlbums.map((album) => (
+            <div key={album.id} onClick={() => setSelectedAlbum(album)} className="group relative aspect-square bg-zinc-900 rounded-[1.8rem] overflow-hidden cursor-pointer active:scale-95 transition-transform">
+              <img src={album.coverUrl} className="w-full h-full object-cover" alt="" />
+              {cols <= 2 && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left">
+                  <p className="text-[8px] font-black uppercase text-green-500 italic mb-1">{album.artist}</p>
+                  <p className="text-xs font-bold truncate uppercase">{album.title}</p>
+                </div>
+              )}
+              <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full ${album.status === 'MAM' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
+            </div>
+          ))}
+        </div>
       </main>
 
       <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-green-500 text-black rounded-full flex items-center justify-center shadow-[0_20px_40px_rgba(34,197,94,0.3)] active:scale-90 transition-transform z-50 border-[6px] border-[#09090b]"><Plus size={36} strokeWidth={3} /></button>
 
-      {/* SZUFLADA FILTRÓW (Tymczasowe) */}
       <AnimatePresence>
         {showFilters && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowFilters(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110]" />
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120] shadow-2xl">
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120]">
               <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-10" />
               <div className="space-y-10 max-w-lg mx-auto pb-6">
                 <section>
@@ -182,7 +175,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* USTAWIENIA (Zapisują Defaults) */}
       {showSettings && (
         <SettingsModal 
           cols={cols} setCols={setCols} 
@@ -204,12 +196,11 @@ function App() {
   );
 }
 
-// Komponenty pomocnicze
 const FilterBtn = ({ label, active, onClick, activeClass = 'bg-white text-black' }: any) => (
   <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass + ' border-transparent' : 'bg-zinc-800/30 text-zinc-500 border-white/5'}`}>{label}</button>
 );
 const SortBtn = ({ label, active, onClick }: any) => (
-  <button onClick={onClick} className={`py-4 px-4 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border flex items-center justify-center text-center ${active ? 'bg-zinc-800 text-green-500 border-green-500/50' : 'bg-zinc-800/20 text-zinc-600 border-white/5'}`}>{label}</button>
+  <button onClick={onClick} className={`py-4 px-4 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border flex items-center justify-center text-center ${active ? 'bg-zinc-800 text-green-500 border-green-500/50 shadow-inner' : 'bg-zinc-800/20 text-zinc-600 border-white/5'}`}>{label}</button>
 );
 const FilterLabel = ({ icon, title }: any) => (
   <div className="flex items-center gap-2 mb-5 text-zinc-500 border-b border-white/5 pb-2">{icon}<span className="text-[10px] font-black uppercase tracking-[0.2em]">{title}</span></div>
