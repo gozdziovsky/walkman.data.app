@@ -8,6 +8,15 @@ import {
 import { supabase } from '../lib/supabase';
 import type { Album } from '../types/album';
 
+// --- NOWOŚĆ: FUNKCJA DO POBIERANIA MINIATURY ---
+// Używamy tego samego silnika optymalizacji, co w Gridzie, 
+// aby pobrać lekką wersję obrazka do natychmiastowego wyświetlenia.
+const getThumbCover = (url: string) => {
+  if (!url) return '';
+  if (url.includes('mzstatic.com')) return url.replace('800x800', '100x100'); // Apple natywna miniatura
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=100&h=100&fit=cover&output=webp&q=70`; // wsrv.nl
+};
+
 interface DetailsModalProps {
   album: Album;
   onClose: () => void;
@@ -25,6 +34,11 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
   const [imagePreview, setImagePreview] = useState<string | null>(album.coverUrl);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [direction, setDirection] = useState(0); 
+  
+  // --- NOWOŚĆ: STAN DLA "PEŁNEJ" OKŁADKI ---
+  // isFullLoaded = true, gdy ostra okładka (800x800) wczyta się w tle.
+  const [isFullLoaded, setIsFullLoaded] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -32,7 +46,13 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
     setImagePreview(album.coverUrl);
     setIsEdit(false);
     setShowTracks(false);
+    
+    // --- NOWOŚĆ: RESET STANU DLA NOWEGO ALBUMU ---
+    setIsFullLoaded(false); // Nowy album -> pełna okładka nie jest jeszcze załadowana
   }, [album]);
+
+  // renderArtists, linki, aktualizacja, usuwanie, warianty bez zmian...
+  // ...
 
   const renderArtists = (artistString: string) => {
     const exceptions = ["Tyler, The Creator", "Earth, Wind & Fire", "Blood, Sweat & Tears"];
@@ -114,18 +134,16 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
     exit: (direction: number) => ({ x: direction < 0 ? 300 : -300, opacity: 0 })
   };
 
-  // --- DYNAMICZNY ROZMIAR TYTUŁU ---
-  // Analizuje najdłuższe słowo w tytule i skaluje font w dół, aby zapobiec brzydkiemu łamaniu
   const getTitleClass = (title: string) => {
     if (!title) return "text-4xl md:text-6xl";
     const longestWord = Math.max(...title.split(' ').map(w => w.length));
-    if (longestWord > 14) return "text-2xl md:text-4xl"; // Np. "Supercalifragilistic..."
-    if (longestWord > 10) return "text-3xl md:text-5xl"; // Np. "Balloonerism"
-    return "text-4xl md:text-6xl"; // Standard
+    if (longestWord > 14) return "text-2xl md:text-4xl"; 
+    if (longestWord > 10) return "text-3xl md:text-5xl";
+    return "text-4xl md:text-6xl";
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6" onClose={onClose}>
       
       {onPrev && !isEdit && (
         <button onClick={(e) => { e.stopPropagation(); setDirection(-1); onPrev(); }} className="hidden md:flex absolute left-10 p-5 text-white/20 hover:text-brand transition-colors"><ChevronLeft size={48} /></button>
@@ -156,13 +174,14 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
             else if (info.offset.x > 0 && onPrev) { setDirection(-1); onPrev(); }
           }
         }}
-        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative" 
+        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative transform-gpu will-change-transform" 
         onClick={e => e.stopPropagation()}
       >
         
         {/* LEWA STRONA: OKŁADKA / TRACKLISTA */}
         <div className="w-full md:w-1/2 aspect-square relative bg-zinc-950 shrink-0 overflow-hidden">
           
+          {/* ... sekcja tracklisty ... */}
           {!isEdit && album.tracks && (
             <div className="absolute inset-0 bg-zinc-950 p-8 overflow-y-auto no-scrollbar z-0 flex flex-col">
                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
@@ -178,6 +197,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
 
           <motion.div 
             className="absolute inset-0 z-10 bg-zinc-800"
+            // drag, animate, transition... bez zmian
             drag={!isEdit && album.tracks ? "y" : false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0.2} 
@@ -194,10 +214,31 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
             animate={{ y: showTracks ? '-100%' : '0%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           >
-            <img src={imagePreview || album.coverUrl} className={`w-full h-full object-cover transition-opacity ${isEdit ? 'opacity-30 blur-sm' : 'opacity-100'}`} alt="" />
+            {/* --- KLUCZOWE: HYBRYDOWE ŁADOWANIE OKŁADEK --- */}
             
+            {/* 1. Miniatura (Placeholder) - ładuje się BŁYSKAWICZNIE */}
+            {!isEdit && (
+              <img 
+                src={getThumbCover(album.coverUrl)} 
+                className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-70 z-0" 
+                alt="" 
+              />
+            )}
+
+            {/* 2. Pełna okładka (800x800) - ładuje się w tle i wchodzi płynnie */}
+            <img 
+              src={imagePreview || album.coverUrl} 
+              className={`w-full h-full object-cover transition-opacity duration-500 z-10 relative 
+                ${isEdit ? 'opacity-30 blur-sm' : 
+                  (isFullLoaded || imagePreview !== album.coverUrl) ? 'opacity-100' : 'opacity-0'
+                }`}
+              alt="" 
+              onLoad={() => setIsFullLoaded(true)} // <-- Sygnalizuj załadowanie pełnej wersji
+            />
+            
+            {/* ... reszta przycisków, edycji, chevron Tracks ... */}
             {isEdit && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 gap-4">
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 gap-4 z-20">
                 <button onClick={() => fileInputRef.current?.click()} className="bg-white text-black px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-brand transition-colors shadow-2xl">
                   <ImageIcon size={16} /> Change File
                 </button>
@@ -217,14 +258,14 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
             )}
 
             {!isEdit && album.tracks && !showTracks && (
-               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-70 animate-bounce pointer-events-none">
+               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-70 animate-bounce pointer-events-none z-20">
                  <ChevronUp size={24} className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]" />
                  <span className="text-[8px] font-black uppercase tracking-widest text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] mt-1">Tracks</span>
                </div>
             )}
 
             {!showTracks && (
-              <div className="absolute top-6 left-6 flex gap-3 z-20">
+              <div className="absolute top-6 left-6 flex gap-3 z-30">
                 {!isEdit ? (
                   <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="p-4 bg-black/40 backdrop-blur-md rounded-full text-white hover:text-brand transition-all active:scale-90"><Edit3 size={20} /></button>
                 ) : (
@@ -234,16 +275,16 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
             )}
 
             {!showTracks && (
-              <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-6 right-6 p-4 bg-black/40 backdrop-blur-md rounded-full text-white z-20 active:scale-90 hover:bg-white hover:text-black transition-all"><X size={20} /></button>
+              <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-6 right-6 p-4 bg-black/40 backdrop-blur-md rounded-full text-white z-30 active:scale-90 hover:bg-white hover:text-black transition-all"><X size={20} /></button>
             )}
           </motion.div>
         </div>
 
-        {/* PRAWA STRONA: DANE / FORMULARZ */}
+        {/* ... PRAWA STRONA: BEZ ZMIAN ... */}
         <div className="p-8 md:p-12 flex-1 overflow-y-auto no-scrollbar text-white text-left bg-zinc-900">
           <AnimatePresence mode="wait">
             
-            {/* --- TRYB EDYCJI --- */}
+            {/* TRYB EDYCJI */}
             {isEdit ? (
               <motion.div key="edit" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6 pb-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -265,15 +306,9 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
                   <div className="space-y-1"><label className="text-[9px] font-black text-zinc-600 uppercase flex items-center gap-1 ml-1"><Star size={10}/> Rating</label><input type="number" max="10" min="0" className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand/50" value={form.rating} onChange={e => setForm({...form, rating: parseInt(e.target.value)})} /></div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-zinc-600 uppercase ml-1">Genre</label>
-                  <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand/50 transition-all" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} />
-                </div>
+                <div className="space-y-1"><label className="text-[9px] font-black text-zinc-600 uppercase ml-1">Genre</label><input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand/50 transition-all" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} /></div>
 
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-zinc-600 uppercase flex items-center gap-1 ml-1"><ListMusic size={10}/> Tracklist</label>
-                  <textarea className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[11px] font-mono text-zinc-300 h-32 resize-none no-scrollbar outline-none focus:border-brand/50" value={form.tracks || ''} onChange={e => setForm({...form, tracks: e.target.value})} />
-                </div>
+                <div className="space-y-1"><label className="text-[9px] font-black text-zinc-600 uppercase flex items-center gap-1 ml-1"><ListMusic size={10}/> Tracklist</label><textarea className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[11px] font-mono text-zinc-300 h-32 resize-none no-scrollbar outline-none focus:border-brand/50" value={form.tracks || ''} onChange={e => setForm({...form, tracks: e.target.value})} /></div>
 
                 <div className="space-y-4 pt-2 border-t border-white/5">
                    <div className="space-y-1">
@@ -300,16 +335,14 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               </motion.div>
             ) : (
               
-              /* --- TRYB WIDOKU --- */
+              /* TRYB WIDOKU */
               <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
                 <div>
-                  {/* ZMIANA: Naturalny tracking-widest dla artystów */}
                   <p className="text-brand font-black uppercase tracking-widest text-[10px] mb-4 italic leading-none flex flex-wrap">
                     {renderArtists(album.artist)}
                   </p>
                   
                   <div className="flex justify-between items-start gap-4">
-                    {/* ZMIANA: Dynamiczny rozmiar tekstu + zakaz łamania w pół wyrazu (break-normal) */}
                     <h2 className={`${getTitleClass(album.title)} font-black uppercase tracking-tighter italic leading-[0.9] mb-8 min-w-0 flex-1 break-normal`}>
                       {album.title}
                     </h2>
