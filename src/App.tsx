@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-// Dodano ikonę X do importów
 import { Plus, Settings2, Search as SearchIcon, Filter, Disc, BookmarkCheck, ArrowUpDown, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './lib/supabase';
@@ -28,15 +27,15 @@ function App() {
     localStorage.setItem('walkman_theme_color', themeColor);
   }, [themeColor]);
 
-  // --- KONFIGURACJA BIEŻĄCA ---
+  // --- KONFIGURACJA BIEŻĄCA (Widok) ---
   const [filterFormat, setFilterFormat] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
-  // --- KONFIGURACJA DOMYŚLNA ---
-  const [defaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
-  const [defaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
-  const [defaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
+  // --- KONFIGURACJA DOMYŚLNA (Settings) ---
+  const [defaultFormat, setDefaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
+  const [defaultStatus, setDefaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
+  const [defaultSort, setDefaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
 
   const [cols, setCols] = useState<number>(() => {
     const saved = localStorage.getItem('walkman_cols');
@@ -53,18 +52,14 @@ function App() {
 
   const gridConfig: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
 
-  // --- EFEKT: BLOKADA SCROLLA ---
+  // BLOKADA SCROLLA
   useEffect(() => {
     const isAnyModalOpen = showAddModal || showSettings || showFilters || !!selectedAlbum;
-    if (isAnyModalOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100vh';
-    } else {
-      document.body.style.overflow = 'unset';
-      document.body.style.height = 'unset';
-    }
+    document.body.style.overflow = isAnyModalOpen ? 'hidden' : 'unset';
+    document.body.style.height = isAnyModalOpen ? '100vh' : 'unset';
   }, [showAddModal, showSettings, showFilters, selectedAlbum]);
 
+  // INICJALIZACJA
   useEffect(() => {
     fetchAlbums();
     setFilterFormat(defaultFormat);
@@ -107,8 +102,7 @@ function App() {
   const activeFiltersCount = (filterFormat !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (sortBy !== (localStorage.getItem('walkman_default_sort') || 'recent') ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white pb-32">
-      {/* STYLE DYNAMICZNEGO MOTYWU */}
+    <div className="min-h-screen bg-[#09090b] text-white pb-32 selection-brand">
       <style>{`
         :root { --brand-color: ${themeColor}; }
         .text-brand { color: var(--brand-color) !important; }
@@ -148,29 +142,16 @@ function App() {
           </div>
         </div>
 
-        {/* WYSZUKIWARKA Z PRZYCISKIEM CZYSZCZENIA */}
         <div className="relative">
-          <div className="absolute inset-y-0 left-5 flex items-center text-zinc-600">
-            <SearchIcon size={14} />
-          </div>
+          <div className="absolute inset-y-0 left-5 flex items-center text-zinc-600"><SearchIcon size={14} /></div>
           <input 
-            type="text" 
-            placeholder="Search archive..." 
-            // Zwiększono pr-12 (padding right), aby tekst nie wchodził pod ikonkę X
-            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none transition-all placeholder:text-zinc-700 focus:bg-zinc-900/60 focus:border-brand/30" 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
+            type="text" placeholder="Search archive..." 
+            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none transition-all focus:bg-zinc-900/60 focus:border-brand/30" 
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} 
           />
-          
           <AnimatePresence>
             {searchTerm && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-5 flex items-center text-zinc-600 hover:text-brand transition-colors active:scale-90"
-              >
+              <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-5 flex items-center text-zinc-600 hover:text-brand transition-colors">
                 <X size={16} strokeWidth={3} />
               </motion.button>
             )}
@@ -178,26 +159,21 @@ function App() {
         </div>
       </header>
 
-      {/* GŁÓWNY GRID */}
-      <main className="px-6 mt-4 text-left">
-        {processedAlbums.length === 0 ? (
-          <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.4em] italic">No records found</p></div>
-        ) : (
-          <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`}>
-            {processedAlbums.map((album) => (
-              <div key={album.id} onClick={() => setSelectedAlbum(album)} className="group relative aspect-square bg-zinc-900 rounded-[1.8rem] overflow-hidden cursor-pointer active:scale-95 transition-transform">
-                <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
-                {cols <= 2 && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end">
-                    <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
-                    <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
-                  </div>
-                )}
-                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full ${album.status === 'MAM' ? 'bg-brand shadow-[0_0_10px_var(--brand-color)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
-              </div>
-            ))}
-          </div>
-        )}
+      <main className="px-6 mt-4">
+        <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`}>
+          {processedAlbums.map((album) => (
+            <div key={album.id} onClick={() => setSelectedAlbum(album)} className="group relative aspect-square bg-zinc-900 rounded-[1.8rem] overflow-hidden cursor-pointer active:scale-95 transition-transform">
+              <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
+              {cols <= 2 && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left">
+                  <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
+                  <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
+                </div>
+              )}
+              <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full ${album.status === 'MAM' ? 'bg-brand shadow-[0_0_10px_var(--brand-color)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
+            </div>
+          ))}
+        </div>
       </main>
 
       <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-brand text-black rounded-full flex items-center justify-center shadow-2xl shadow-brand/30 active:scale-90 transition-transform z-50 border-[6px] border-[#09090b]">
@@ -209,7 +185,7 @@ function App() {
         {showFilters && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowFilters(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110]" />
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120] shadow-2xl">
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120]">
               <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-10" />
               <div className="space-y-10 max-w-lg mx-auto pb-6 text-left">
                 <section>
@@ -247,9 +223,9 @@ function App() {
         <SettingsModal 
           cols={cols} setCols={setCols} 
           themeColor={themeColor} setThemeColor={setThemeColor}
-          defaultFormat={defaultFormat} setDefaultFormat={(v) => localStorage.setItem('walkman_default_format', v)}
-          defaultStatus={defaultStatus} setDefaultStatus={(v) => localStorage.setItem('walkman_default_status', v)}
-          defaultSort={defaultSort} setDefaultSort={(v) => localStorage.setItem('walkman_default_sort', v)}
+          defaultFormat={defaultFormat} setDefaultFormat={(v) => { localStorage.setItem('walkman_default_format', v); setDefaultFormat(v); }}
+          defaultStatus={defaultStatus} setDefaultStatus={(v) => { localStorage.setItem('walkman_default_status', v); setDefaultStatus(v); }}
+          defaultSort={defaultSort} setDefaultSort={(v: any) => { localStorage.setItem('walkman_default_sort', v); setDefaultSort(v); }}
           searchSource={searchSource} setSearchSource={setSearchSource}
           discogsToken={discogsToken} setDiscogsToken={setDiscogsToken}
           onClose={() => setShowSettings(false)} 
@@ -257,18 +233,7 @@ function App() {
       )}
 
       {showAddModal && <AddAlbumModal searchSource={searchSource} discogsToken={discogsToken} onClose={() => setShowAddModal(false)} onSuccess={fetchAlbums} />}
-      
-      {selectedAlbum && (
-        <DetailsModal 
-          album={selectedAlbum} 
-          onClose={() => setSelectedAlbum(null)} 
-          onUpdateSuccess={fetchAlbums}
-          onArtistClick={(name: string) => {
-            setSearchTerm(name);
-            setSelectedAlbum(null);
-          }}
-        />
-      )}
+      {selectedAlbum && <DetailsModal album={selectedAlbum} onClose={() => setSelectedAlbum(null)} onUpdateSuccess={fetchAlbums} onArtistClick={(n:string)=>{setSearchTerm(n);setSelectedAlbum(null);}} />}
     </div>
   );
 }
@@ -280,7 +245,7 @@ const SortBtn = ({ label, active, onClick }: any) => (
   <button onClick={onClick} className={`py-4 px-4 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border flex items-center justify-center text-center ${active ? 'bg-zinc-800 text-brand border-brand/50 shadow-inner' : 'bg-zinc-800/20 text-zinc-600 border-white/5'}`}>{label}</button>
 );
 const FilterLabel = ({ icon, title }: any) => (
-  <div className="flex items-center gap-2 mb-5 text-zinc-500 border-b border-white/5 pb-2">{icon}<span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none">{title}</span></div>
+  <div className="flex items-center gap-2 mb-5 text-zinc-500 border-b border-white/5 pb-2">{icon}<span className="text-[10px] font-black uppercase tracking-[0.2em]">{title}</span></div>
 );
 
 export default App;
