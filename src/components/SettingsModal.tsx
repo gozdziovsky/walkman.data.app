@@ -42,18 +42,34 @@ export const SettingsModal = ({
   const [isStartupOpen, setIsStartupOpen] = useState(false);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[130] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6" onClick={onClose}>
-      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="bg-zinc-900 w-full max-w-md rounded-[3rem] p-8 border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar" onClick={e => e.stopPropagation()}>
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      className="fixed inset-0 z-[130] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6" 
+      onClick={onClose}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+        animate={{ scale: 1, opacity: 1, y: 0 }} 
+        className="bg-zinc-900 w-full max-w-md rounded-[3rem] p-8 border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar" 
+        onClick={e => e.stopPropagation()}
+      >
         
         <header className="flex justify-between items-center mb-10 text-left">
           <div>
-            <h3 className="text-2xl font-black uppercase italic tracking-tighter leading-none">System <span className="text-brand">Config</span></h3>
+            <h3 className="text-2xl font-black uppercase italic tracking-tighter leading-none">
+              System <span className="text-brand">Config</span>
+            </h3>
             <p className="text-[9px] font-black text-zinc-500 uppercase mt-2">Personalize your archive</p>
           </div>
-          <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-colors"><X size={20} /></button>
+          <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-colors">
+            <X size={20} />
+          </button>
         </header>
 
         <div className="space-y-8 text-left">
+          
           {/* THEME SELECTOR */}
           <section>
             <div className="flex items-center gap-2 mb-4 text-zinc-500">
@@ -76,50 +92,135 @@ export const SettingsModal = ({
             </div>
           </section>
 
+          {/* GRID VIEWPORT */}
           <section>
-            <div className="flex items-center gap-2 mb-4 text-zinc-500"><LayoutGrid size={12} /><span className="text-[9px] font-black uppercase tracking-widest">Grid Viewport</span></div>
+            <div className="flex items-center gap-2 mb-4 text-zinc-500">
+              <LayoutGrid size={12} />
+              <span className="text-[9px] font-black uppercase tracking-widest">Grid Viewport</span>
+            </div>
             <div className="grid grid-cols-4 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5">
               {[1, 2, 3, 4].map((num) => (
-                <button key={num} onClick={() => setCols(num)} className={`py-3 rounded-xl text-xs font-black transition-all ${cols === num ? 'bg-white text-black shadow-lg' : 'text-zinc-600'}`}>{num}</button>
+                <button 
+                  key={num} 
+                  onClick={() => setCols(num)} 
+                  className={`py-3 rounded-xl text-xs font-black transition-all ${cols === num ? 'bg-white text-black shadow-lg' : 'text-zinc-600'}`}
+                >
+                  {num}
+                </button>
               ))}
             </div>
           </section>
 
+          {/* SEARCH ENGINE */}
           <section>
-            <div className="flex items-center gap-2 mb-4 text-zinc-500"><Search size={12} /><span className="text-[9px] font-black uppercase tracking-widest">Search Engine</span></div>
+            <div className="flex items-center gap-2 mb-4 text-zinc-500">
+              <Search size={12} />
+              <span className="text-[9px] font-black uppercase tracking-widest">Search Engine</span>
+            </div>
             <div className="grid grid-cols-2 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5">
-              <button onClick={() => setSearchSource('itunes')} className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all ${searchSource === 'itunes' ? 'bg-white text-black' : 'text-zinc-600'}`}>iTunes</button>
-              <button onClick={() => setSearchSource('discogs')} className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all ${searchSource === 'discogs' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600'}`}>Discogs</button>
+              <button 
+                onClick={() => setSearchSource('itunes')} 
+                className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all ${searchSource === 'itunes' ? 'bg-white text-black' : 'text-zinc-600'}`}
+              >
+                iTunes
+              </button>
+              <button 
+                onClick={() => setSearchSource('discogs')} 
+                className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all ${searchSource === 'discogs' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600'}`}
+              >
+                Discogs
+              </button>
             </div>
           </section>
 
+          {/* DISCOGS TOKEN */}
           <section className="bg-white/5 p-4 rounded-2xl border border-white/5">
-            <div className="flex items-center gap-2 mb-3 text-zinc-500"><Key size={12} /><span className="text-[9px] font-black uppercase tracking-widest leading-none">Discogs API Token</span></div>
-            <input type="password" placeholder="Paste Token..." className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-[10px] font-mono outline-none focus:border-brand/50 text-white" value={discogsToken} onChange={(e) => setDiscogsToken(e.target.value)} />
+            <div className="flex items-center gap-2 mb-3 text-zinc-500">
+              <Key size={12} />
+              <span className="text-[9px] font-black uppercase tracking-widest leading-none">Discogs API Token</span>
+            </div>
+            <input 
+              type="password" 
+              placeholder="Paste Token..." 
+              className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-[10px] font-mono outline-none focus:border-brand/50 text-white transition-all" 
+              value={discogsToken} 
+              onChange={(e) => setDiscogsToken(e.target.value)} 
+            />
           </section>
 
+          {/* STARTUP DEFAULTS (Z SORTOWANIEM!) */}
           <div className="space-y-4">
-            <button onClick={() => setIsStartupOpen(!isStartupOpen)} className="w-full flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+            <button 
+              onClick={() => setIsStartupOpen(!isStartupOpen)} 
+              className="w-full flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-all"
+            >
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg transition-colors ${isStartupOpen ? 'bg-brand text-black' : 'bg-brand/10 text-brand'}`}><Zap size={14} fill={isStartupOpen ? "currentColor" : "none"} /></div>
+                <div className={`p-2 rounded-lg transition-colors ${isStartupOpen ? 'bg-brand text-black' : 'bg-brand/10 text-brand'}`}>
+                  <Zap size={14} fill={isStartupOpen ? "currentColor" : "none"} />
+                </div>
                 <h4 className="text-[11px] font-black uppercase tracking-[0.1em]">Startup Defaults</h4>
               </div>
-              <motion.div animate={{ rotate: isStartupOpen ? 180 : 0 }} className="text-zinc-500"><ChevronDown size={18} /></motion.div>
+              <motion.div animate={{ rotate: isStartupOpen ? 180 : 0 }} className="text-zinc-500">
+                <ChevronDown size={18} />
+              </motion.div>
             </button>
 
             <AnimatePresence>
               {isStartupOpen && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden bg-black/20 rounded-2xl p-5 space-y-8">
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }} 
+                  animate={{ height: "auto", opacity: 1 }} 
+                  exit={{ height: 0, opacity: 0 }} 
+                  className="overflow-hidden bg-black/20 rounded-2xl p-5 space-y-8"
+                >
                   <section>
                     <Label title="Default Status" />
                     <div className="grid grid-cols-3 gap-2">
-                      {['ALL', 'MAM', 'SZUKAM'].map(s => <button key={s} onClick={() => setDefaultStatus(s)} className={`py-2.5 rounded-lg text-[9px] font-black uppercase border transition-all ${localStorage.getItem('walkman_default_status') === s ? 'border-brand text-brand bg-brand/5' : 'border-white/5 text-zinc-600'}`}>{s === 'SZUKAM' ? 'WISH' : s}</button>)}
+                      {['ALL', 'MAM', 'SZUKAM'].map(s => (
+                        <button 
+                          key={s} 
+                          onClick={() => setDefaultStatus(s)} 
+                          className={`py-2.5 rounded-lg text-[9px] font-black uppercase border transition-all ${localStorage.getItem('walkman_default_status') === s ? 'border-brand text-brand bg-brand/5' : 'border-white/5 text-zinc-600'}`}
+                        >
+                          {s === 'SZUKAM' ? 'WISH' : s}
+                        </button>
+                      ))}
                     </div>
                   </section>
+
                   <section>
                     <Label title="Default Format" />
                     <div className="grid grid-cols-4 gap-2">
-                      {['ALL', 'FLAC', 'MP3', 'Hi-Res'].map(f => <button key={f} onClick={() => setDefaultFormat(f)} className={`py-2.5 rounded-lg text-[9px] font-black uppercase border transition-all ${localStorage.getItem('walkman_default_format') === f ? 'border-brand text-brand bg-brand/5' : 'border-white/5 text-zinc-600'}`}>{f}</button>)}
+                      {['ALL', 'FLAC', 'MP3', 'Hi-Res'].map(f => (
+                        <button 
+                          key={f} 
+                          onClick={() => setDefaultFormat(f)} 
+                          className={`py-2.5 rounded-lg text-[9px] font-black uppercase border transition-all ${localStorage.getItem('walkman_default_format') === f ? 'border-brand text-brand bg-brand/5' : 'border-white/5 text-zinc-600'}`}
+                        >
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* POWRÓT SORTOWANIA */}
+                  <section>
+                    <Label title="Default Sort Order" />
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'recent', label: 'RECENT' },
+                        { id: 'artist', label: 'ARTIST A-Z' },
+                        { id: 'album', label: 'ALBUM A-Z' },
+                        { id: 'year', label: 'YEAR' }
+                      ].map(opt => (
+                        <button 
+                          key={opt.id} 
+                          onClick={() => setDefaultSort(opt.id)} 
+                          className={`py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-tighter border transition-all ${localStorage.getItem('walkman_default_sort') === opt.id ? 'border-brand text-brand bg-brand/5' : 'border-white/5 text-zinc-600'}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
                     </div>
                   </section>
                 </motion.div>
@@ -127,9 +228,16 @@ export const SettingsModal = ({
             </AnimatePresence>
           </div>
         </div>
+
+        <footer className="pt-8 border-t border-white/5 mt-6 text-center">
+           <p className="text-[8px] text-zinc-700 uppercase tracking-[0.3em] font-bold">Encrypted Local Storage Sync</p>
+        </footer>
+
       </motion.div>
     </motion.div>
   );
 };
 
-const Label = ({ title }: { title: string }) => <div className="text-[9px] font-black uppercase text-zinc-600 mb-2">{title}</div>;
+const Label = ({ title }: { title: string }) => (
+  <div className="text-[9px] font-black uppercase text-zinc-600 mb-2">{title}</div>
+);
