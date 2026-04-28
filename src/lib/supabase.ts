@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Wklej tutaj swoje dane z zakładki Settings -> API w Supabase
-const supabaseUrl = 'https://fhdswrktfskajmnewlyj.supabase.co';
-const supabaseKey = 'sb_publishable_X7CP3izXMzuuhIT32AT53Q_dbRovN_d';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error("Supabase credentials missing! Check your .env file.");
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
