@@ -13,7 +13,6 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Pełny stan formularza
   const [form, setForm] = useState({
     artist: '', 
     title: '', 
@@ -33,15 +32,12 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     setSearching(true);
     try {
       if (searchSource === 'itunes') {
-        // 1. Zwiększamy limit do 50 i dodajemy polski region (country=PL)
         const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=50&country=PL`);
         const data = await res.json();
         
-        // 2. Mądrzejszy filtr: wywalamy sprawdzanie sztywnego słowa "Album", 
-        // ale odrzucamy wszystko co ma mniej niż 3 utwory (Single).
         const pureAlbums = data.results
           .filter((r: any) => r.trackCount > 2) 
-          .slice(0, 5); // Zostawiamy 5 najlepszych wyników do wyświetlenia
+          .slice(0, 15); // <-- ZMIANA: Zwiększono limit do 15
 
         setResults(pureAlbums.map((r: any) => ({
           collectionId: r.collectionId,
@@ -53,7 +49,8 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
         })));
       } else {
         if (!discogsToken) return;
-        const res = await fetch(`https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&per_page=5&token=${discogsToken}`);
+        // <-- ZMIANA: Zwiększono per_page do 15 dla Discogs
+        const res = await fetch(`https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&per_page=15&token=${discogsToken}`);
         const data = await res.json();
         setResults(data.results.map((r: any) => {
           const [artist, title] = r.title.includes(' - ') ? r.title.split(' - ') : ['Unknown', r.title];
@@ -69,7 +66,6 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     setSearching(true);
     let fetchedTracks = '';
     
-    // Dociąganie tracklisty z iTunes
     if (searchSource === 'itunes' && item.collectionId) {
       try {
         const res = await fetch(`https://itunes.apple.com/lookup?id=${item.collectionId}&entity=song`);
@@ -123,7 +119,6 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
         </header>
 
-        {/* Pancerny pasek wyszukiwania */}
         <div className="relative mb-10 group w-full">
           <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all shadow-inner h-14 w-full">
             <div className="flex items-center justify-center pl-5 text-zinc-600 shrink-0"><Search size={18} /></div>
@@ -139,23 +134,24 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
             </button>
           </div>
 
-          {/* Lista wyników */}
+          {/* ZMIANA: Dodano max-h-[300px] i overflow-y-auto dla przewijanej listy */}
           {results.length > 0 && (
             <div className="absolute top-full mt-3 left-0 right-0 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
-              {results.map((r, i) => (
-                <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-brand/10 text-left border-b border-white/5 last:border-0 text-white transition-colors group">
-                  <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover shadow-lg" alt="" />
-                  <div className="truncate">
-                    <p className="text-xs font-black uppercase truncate group-hover:text-brand transition-colors">{r.title}</p>
-                    <p className="text-[10px] text-zinc-500 uppercase font-bold">{r.artist}</p>
-                  </div>
-                </button>
-              ))}
+              <div className="max-h-[300px] overflow-y-auto no-scrollbar">
+                {results.map((r, i) => (
+                  <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-brand/10 text-left border-b border-white/5 last:border-0 text-white transition-colors group">
+                    <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover shadow-lg shrink-0" alt="" />
+                    <div className="truncate min-w-0">
+                      <p className="text-xs font-black uppercase truncate group-hover:text-brand transition-colors">{r.title}</p>
+                      <p className="text-[10px] text-zinc-500 uppercase font-bold truncate">{r.artist}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Formularz */}
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="flex flex-col md:flex-row gap-8">
             <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-52 aspect-square bg-zinc-950 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative shrink-0 group hover:border-brand/30 transition-colors">
@@ -185,8 +181,8 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           <div className="space-y-1">
             <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Initial Status</label>
             <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded-2xl border border-white/5 h-14">
-              <button type="button" onClick={() => setForm({...form, status: 'MAM'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'MAM' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600'}`}>Owned</button>
-              <button type="button" onClick={() => setForm({...form, status: 'SZUKAM'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'SZUKAM' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-zinc-600'}`}>Wanted</button>
+              <button type="button" onClick={() => setForm({...form, status: 'MAM'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'MAM' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600 hover:text-white'}`}>Owned</button>
+              <button type="button" onClick={() => setForm({...form, status: 'SZUKAM'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'SZUKAM' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-zinc-600 hover:text-white'}`}>Wanted</button>
             </div>
           </div>
 

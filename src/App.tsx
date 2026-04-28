@@ -20,6 +20,21 @@ import type { Album } from './types/album';
 
 type SortOption = 'recent' | 'artist' | 'album' | 'year';
 
+// --- NOWOŚĆ: SILNIK KOMPRESJI OKŁADEK ---
+const getOptimizedCover = (url: string, quality: 'grid' | 'full') => {
+  if (!url) return '';
+  
+  if (quality === 'full') return url;
+
+  // Natywna kompresja serwerów Apple (Błyskawiczna)
+  if (url.includes('mzstatic.com')) {
+    return url.replace('800x800', '300x300');
+  }
+  
+  // Kompresja w locie (WebP) dla Discogs i plików z Supabase
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=400&h=400&fit=cover&output=webp&q=80`;
+};
+
 function App() {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -188,11 +203,16 @@ function App() {
                 onClick={() => setSelectedAlbum(album)} 
                 className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform transform-gpu shadow-xl"
               >
-                <img src={album.coverUrl} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={album.title} />
+                {/* --- UŻYCIE ZOPTYMALIZOWANEJ OKŁADKI --- */}
+                <img 
+                  src={getOptimizedCover(album.coverUrl, 'grid')} 
+                  loading="lazy" 
+                  decoding="async" 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  alt={album.title} 
+                />
                 
-                {/* --- NOWE: MINIMALISTYCZNE TRÓJKĄTY W ROGACH --- */}
-                
-                {/* 1. Tracklista (Lewy Górny Róg) - widoczne tylko, gdy są tracki */}
+                {/* Tracklista (Lewy Górny Róg) */}
                 {album.tracks && (
                   <div 
                     className="absolute top-0 left-0 w-9 h-9 bg-black/60 backdrop-blur-md z-10 pointer-events-none" 
@@ -202,13 +222,13 @@ function App() {
                   </div>
                 )}
 
-                {/* 2. Status (Prawy Górny Róg) - kolor odpowiada statusowi */}
+                {/* Status (Prawy Górny Róg) */}
                 <div 
                   className={`absolute top-0 right-0 w-7 h-7 z-10 pointer-events-none opacity-95 transition-colors duration-300 ${album.status === 'MAM' ? 'bg-brand' : 'bg-orange-500'}`} 
                   style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
                 />
 
-                {/* Gradient tekstu dla 1 lub 2 kolumn */}
+                {/* Info Overlay (tylko dla 1 lub 2 kolumn) */}
                 {cols <= 2 && (
                   <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none">
                     <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
@@ -217,6 +237,7 @@ function App() {
                 )}
               </div>
             ))}
+            
             {visibleCount < processedAlbums.length && (
               <div className="w-full h-20 col-span-full flex items-center justify-center">
                 <Loader2 className="animate-spin text-zinc-600" size={24} />
@@ -230,7 +251,7 @@ function App() {
         <Plus size={36} strokeWidth={3} />
       </button>
 
-      {/* MODALE */}
+      {/* SZUFLADA FILTRÓW */}
       <AnimatePresence>
         {showFilters && (
           <>
