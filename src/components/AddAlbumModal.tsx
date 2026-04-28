@@ -67,38 +67,117 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
-      <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="bg-zinc-900 w-full max-w-2xl rounded-t-[3rem] md:rounded-[3rem] p-8 md:p-12 overflow-y-auto max-h-[92vh] border-t border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <header className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-black uppercase italic text-white">Add <span className="text-green-500">Record</span></h2>
-          <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500"><X size={20} /></button>
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6" 
+      onClick={onClose}
+    >
+      <motion.div 
+        initial={{ y: "100%" }} 
+        animate={{ y: 0 }} 
+        exit={{ y: "100%" }}
+        // USZTYWNIENIE: Zmieniono typ animacji na 'tween' dla braku efektu "pływania"
+        transition={{ type: "tween", ease: "easeOut", duration: 0.3 }}
+        className="bg-zinc-900 w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 overflow-y-auto max-h-[95vh] border-t border-white/10 shadow-2xl relative" 
+        onClick={e => e.stopPropagation()}
+      >
+        <header className="flex justify-between items-center mb-10">
+          <h2 className="text-3xl font-black uppercase italic text-white tracking-tighter">Add <span className="text-green-500">Record</span></h2>
+          <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
         </header>
 
-        <div className="relative mb-10">
-          <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 h-14">
-            <div className="pl-4 text-zinc-500 shrink-0"><Search size={18} /></div>
-            <input className="flex-1 bg-transparent px-2 h-full outline-none text-sm font-bold placeholder:text-zinc-700 text-white" placeholder="Search..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
-            <button type="button" onClick={search} className="shrink-0 h-full px-6 rounded-xl font-black uppercase text-[10px] bg-white text-black">{searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}</button>
+        {/* NAPRAWIONY PASEK WYSZUKIWANIA */}
+        <div className="relative mb-10 group">
+          <div className="flex items-center bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-green-500/50 transition-all shadow-inner">
+            <div className="pl-5 text-zinc-600">
+              <Search size={18} />
+            </div>
+            <input 
+              className="flex-1 bg-transparent px-4 py-5 outline-none text-sm font-bold text-white placeholder:text-zinc-700" 
+              placeholder={`Search archive via ${searchSource.toUpperCase()}...`} 
+              value={query} 
+              onChange={e => setQuery(e.target.value)} 
+              onKeyDown={e => e.key === 'Enter' && search()} 
+            />
+            <button 
+              type="button" 
+              onClick={search} 
+              className="h-full px-8 bg-white hover:bg-green-500 text-black font-black uppercase text-[10px] tracking-widest transition-colors border-l border-white/5 active:scale-95"
+            >
+              {searching ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Find'}
+            </button>
           </div>
+
+          {/* LISTA WYNIKÓW */}
           {results.length > 0 && (
-            <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-800 rounded-2xl overflow-hidden z-50">
-              {results.map((r, i) => <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-white/5 text-left border-b border-white/5 last:border-0 text-white"><img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover" alt="" /><div><p className="text-xs font-black uppercase">{r.title}</p><p className="text-[10px] text-zinc-500 uppercase">{r.artist}</p></div></button>)}
+            <div className="absolute top-full mt-3 left-0 right-0 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
+              {results.map((r, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => handleSelect(r)} 
+                  className="w-full p-4 flex items-center gap-4 hover:bg-green-500/10 text-left border-b border-white/5 last:border-0 text-white transition-colors group"
+                >
+                  <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover shadow-lg" alt="" />
+                  <div className="truncate">
+                    <p className="text-xs font-black uppercase truncate group-hover:text-green-500 transition-colors">{r.title}</p>
+                    <p className="text-[10px] text-zinc-500 uppercase font-bold">{r.artist}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
           <div className="flex flex-col md:flex-row gap-8">
-            <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-48 aspect-square bg-zinc-800 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative shrink-0">
-              {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover" alt="" /> : <div className="text-center"><ImageIcon className="text-zinc-700 mx-auto mb-2" size={32} /><p className="text-[9px] font-black uppercase text-zinc-600">Manual Cover</p></div>}
+            {/* MANUAL COVER UPLOAD */}
+            <div 
+              onClick={() => fileInputRef.current?.click()} 
+              className="w-full md:w-52 aspect-square bg-zinc-950 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative shrink-0 group hover:border-green-500/30 transition-colors"
+            >
+              {imagePreview ? (
+                <img src={imagePreview} className="w-full h-full object-cover" alt="" />
+              ) : (
+                <div className="text-center">
+                  <ImageIcon className="text-zinc-800 mx-auto mb-2 group-hover:text-green-500/30 transition-colors" size={40} />
+                  <p className="text-[8px] font-black uppercase text-zinc-700 group-hover:text-green-500/50 transition-colors">Manual Cover</p>
+                </div>
+              )}
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); setImagePreview(URL.createObjectURL(e.target.files[0])); } }} />
             </div>
-            <div className="flex-1 space-y-4">
-              <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none" placeholder="Artist" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} />
-              <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none" placeholder="Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
+
+            <div className="flex-1 space-y-5">
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Artist Name</label>
+                <input required className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-green-500/50 transition-all" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Album Title</label>
+                <input required className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-green-500/50 transition-all" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
+              </div>
             </div>
           </div>
-          <button type="submit" disabled={loading} className="w-full py-5 bg-green-500 text-black rounded-3xl font-black uppercase text-[11px]">Save Record</button>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Genre</label>
+              <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-green-500/50 transition-all" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Release Year</label>
+              <input type="number" className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-green-500/50 transition-all" value={form.year} onChange={e => setForm({...form, year: parseInt(e.target.value)})} />
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full py-6 bg-green-500 text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-white active:scale-[0.98] transition-all shadow-2xl shadow-green-500/20 disabled:opacity-50"
+          >
+            {loading ? 'Archiving...' : 'Save Record'}
+          </button>
         </form>
       </motion.div>
     </motion.div>
