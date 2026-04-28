@@ -314,7 +314,29 @@ function App() {
     </div>
   );
 }
+const [session, setSession] = useState<any>(null);
 
+useEffect(() => {
+  // Pobranie aktualnej sesji
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    setSession(session);
+  });
+
+  // Nasłuchiwanie zmian (login/logout)
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    setSession(session);
+  });
+
+  return () => subscription.unsubscribe();
+}, []);
+
+// W return() owiń całą aplikację:
+if (!session) return <Auth />;
+return (
+  <div className="min-h-screen bg-[#09090b] ...">
+    {/* Reszta Twojego kodu App.tsx */}
+  </div>
+);
 const StatBox = ({ label, val, colorClass = "text-zinc-300", active, onClick }: any) => (
   <button 
     onClick={onClick} 
