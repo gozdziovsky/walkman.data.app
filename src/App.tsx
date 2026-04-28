@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './lib/supabase';
+import { Auth } from './components/Auth'; // NOWOŚĆ: Import komponentu logowania
 import { AddAlbumModal } from './components/AddAlbumModal';
 import { DetailsModal } from './components/DetailsModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -32,6 +33,24 @@ const getOptimizedCover = (url: string, quality: 'grid' | 'full') => {
 };
 
 function App() {
+  // --- NOWOŚĆ: Zarządzanie sesją użytkownika ---
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    // Pobierz aktualną sesję przy starcie
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Nasłuchuj na zmiany stanu (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+  // --------------------------------------------
+
   const [albums, setAlbums] = useState<Album[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
@@ -68,11 +87,13 @@ function App() {
   }, [showAddModal, showSettings, showFilters, selectedAlbum]);
 
   useEffect(() => {
-    fetchAlbums();
+    if (session) {
+      fetchAlbums();
+    }
     setFilterFormat(defaultFormat);
     setFilterStatus(defaultStatus);
     setSortBy(defaultSort);
-  }, []);
+  }, [session]); // Dodano session do zależności
 
   const fetchAlbums = async () => {
     const { data } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
@@ -133,6 +154,12 @@ function App() {
 
   const activeFiltersCount = (filterFormat !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (sortBy !== defaultSort ? 1 : 0);
 
+  // --- NOWOŚĆ: Blokada widoku dla niezalogowanych ---
+  if (!session) {
+    return <Auth />;
+  }
+  // --------------------------------------------------
+
   return (
     <div className="min-h-screen bg-[#09090b] text-white pb-32 selection-brand">
       <style>{`
@@ -144,15 +171,14 @@ function App() {
         .selection-brand::selection { background-color: var(--brand-color); color: black; }
       `}</style>
 
-      {/* ZMIANA: Dodano max-w-[1800px] i mx-auto w-full, żeby kontrolować szerokość na dużych monitorach */}
       <header className="px-6 pt-12 space-y-6 max-w-[1800px] mx-auto w-full">
-      <div className="flex flex-col items-center justify-center pt-10 pb-6"> 
-      <img 
-    src={grooveShelfLogo} 
-    alt="GrooveShelf Logo"
-    className="w-full max-w-[320px] md:max-w-[480px] h-auto object-contain select-none"
-  />
-</div>
+        <div className="flex flex-col items-center justify-center pt-10 pb-6"> 
+          <img 
+            src={grooveShelfLogo} 
+            alt="GrooveShelf Logo"
+            className="w-full max-w-[320px] md:max-w-[480px] h-auto object-contain select-none"
+          />
+        </div>
 
         <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-4 shadow-2xl">
           <div className="flex gap-1 text-left overflow-x-auto no-scrollbar items-center">
@@ -189,7 +215,6 @@ function App() {
         </div>
       </header>
 
-      {/* ZMIANA: Max szerokość i hybrydowa siatka md:grid-cols-... */}
       <main className="px-6 mt-4 max-w-[1800px] mx-auto w-full">
         {processedAlbums.length === 0 ? (
           <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.4em] italic">No records found</p></div>
@@ -210,7 +235,6 @@ function App() {
                   alt={album.title} 
                 />
                 
-                {/* Tracklista (Lewy Górny Róg) */}
                 {album.tracks && (
                   <div 
                     className="absolute top-0 left-0 w-9 h-9 bg-black/60 backdrop-blur-md z-10 pointer-events-none" 
@@ -220,13 +244,11 @@ function App() {
                   </div>
                 )}
 
-                {/* Status (Prawy Górny Róg) */}
                 <div 
                   className={`absolute top-0 right-0 w-7 h-7 z-10 pointer-events-none opacity-95 transition-colors duration-300 ${album.status === 'MAM' ? 'bg-brand' : 'bg-orange-500'}`} 
                   style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
                 />
 
-                {/* Info Overlay: zawsze na PC (hover), a na telefonach tylko jeśli kolumn jest <= 2 */}
                 <div className={`absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none transition-opacity duration-300 ${cols <= 2 ? 'opacity-100 md:opacity-0 md:group-hover:opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}>
                   <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
                   <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
@@ -247,7 +269,6 @@ function App() {
         <Plus size={36} strokeWidth={3} />
       </button>
 
-      {/* SZUFLADA FILTRÓW */}
       <AnimatePresence>
         {showFilters && (
           <>
@@ -314,29 +335,7 @@ function App() {
     </div>
   );
 }
-const [session, setSession] = useState<any>(null);
 
-useEffect(() => {
-  // Pobranie aktualnej sesji
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    setSession(session);
-  });
-
-  // Nasłuchiwanie zmian (login/logout)
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    setSession(session);
-  });
-
-  return () => subscription.unsubscribe();
-}, []);
-
-// W return() owiń całą aplikację:
-if (!session) return <Auth />;
-return (
-  <div className="min-h-screen bg-[#09090b] ...">
-    {/* Reszta Twojego kodu App.tsx */}
-  </div>
-);
 const StatBox = ({ label, val, colorClass = "text-zinc-300", active, onClick }: any) => (
   <button 
     onClick={onClick} 
