@@ -20,18 +20,12 @@ import type { Album } from './types/album';
 
 type SortOption = 'recent' | 'artist' | 'album' | 'year';
 
-// --- NOWOŚĆ: SILNIK KOMPRESJI OKŁADEK ---
 const getOptimizedCover = (url: string, quality: 'grid' | 'full') => {
   if (!url) return '';
-  
   if (quality === 'full') return url;
-
-  // Natywna kompresja serwerów Apple (Błyskawiczna)
   if (url.includes('mzstatic.com')) {
     return url.replace('800x800', '300x300');
   }
-  
-  // Kompresja w locie (WebP) dla Discogs i plików z Supabase
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=400&h=400&fit=cover&output=webp&q=80`;
 };
 
@@ -148,7 +142,8 @@ function App() {
         .selection-brand::selection { background-color: var(--brand-color); color: black; }
       `}</style>
 
-      <header className="px-6 pt-12 space-y-6">
+      {/* ZMIANA: Dodano max-w-[1800px] i mx-auto w-full, żeby kontrolować szerokość na dużych monitorach */}
+      <header className="px-6 pt-12 space-y-6 max-w-[1800px] mx-auto w-full">
         <div className="flex flex-col items-center justify-center pt-4">
           <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none select-none">
             Walkman<span className="text-brand">.</span>
@@ -191,11 +186,12 @@ function App() {
         </div>
       </header>
 
-      <main className="px-6 mt-4">
+      {/* ZMIANA: Max szerokość i hybrydowa siatka md:grid-cols-... */}
+      <main className="px-6 mt-4 max-w-[1800px] mx-auto w-full">
         {processedAlbums.length === 0 ? (
           <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.4em] italic">No records found</p></div>
         ) : (
-          <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`} style={{ contentVisibility: 'auto' }}>
+          <div className={`grid ${gridConfig[cols]} md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 transition-all duration-500`} style={{ contentVisibility: 'auto' }}>
             {visibleAlbums.map((album, idx) => (
               <div 
                 key={album.id} 
@@ -203,7 +199,6 @@ function App() {
                 onClick={() => setSelectedAlbum(album)} 
                 className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform transform-gpu shadow-xl"
               >
-                {/* --- UŻYCIE ZOPTYMALIZOWANEJ OKŁADKI --- */}
                 <img 
                   src={getOptimizedCover(album.coverUrl, 'grid')} 
                   loading="lazy" 
@@ -228,13 +223,11 @@ function App() {
                   style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
                 />
 
-                {/* Info Overlay (tylko dla 1 lub 2 kolumn) */}
-                {cols <= 2 && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none">
-                    <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
-                    <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
-                  </div>
-                )}
+                {/* Info Overlay: zawsze na PC (hover), a na telefonach tylko jeśli kolumn jest <= 2 */}
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none transition-opacity duration-300 ${cols <= 2 ? 'opacity-100 md:opacity-0 md:group-hover:opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}>
+                  <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
+                  <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
+                </div>
               </div>
             ))}
             
@@ -304,7 +297,6 @@ function App() {
       )}
 
       {showAddModal && <AddAlbumModal searchSource={searchSource} discogsToken={discogsToken} onClose={() => setShowAddModal(false)} onSuccess={fetchAlbums} />}
-      
       
       <AnimatePresence>
         {selectedAlbum && (
