@@ -89,25 +89,30 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
         </header>
 
-        {/* NAPRAWIONY PASEK WYSZUKIWANIA */}
-        <div className="relative mb-10 group">
-          <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all shadow-inner h-14">
-            <div className="flex items-center pl-5 text-zinc-600">
+        {/* PANCERNY I RESPONSYWNY PASEK WYSZUKIWANIA */}
+        <div className="relative mb-10 group w-full">
+          <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all shadow-inner h-14 w-full">
+            {/* Ikona Lupy */}
+            <div className="flex items-center justify-center pl-5 text-zinc-600 shrink-0">
               <Search size={18} />
             </div>
+            
+            {/* Pole Tekstowe */}
             <input 
-              className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700" 
+              className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700 min-w-0" 
               placeholder={`Search via ${searchSource.toUpperCase()}...`} 
               value={query} 
-              onChange={e => setQuery(e.target.value)} 
-              onKeyDown={e => e.key === 'Enter' && search()} 
+              onChange={(e) => setQuery(e.target.value)} 
+              onKeyDown={(e) => e.key === 'Enter' && search()} 
             />
+            
+            {/* Przycisk Find - Teraz z zakazem zmniejszania (shrink-0) */}
             <button 
               type="button" 
               onClick={search} 
-              className="px-8 bg-white hover:bg-brand text-black font-black uppercase text-[10px] tracking-widest transition-colors active:scale-95 shrink-0"
+              className="px-6 md:px-10 bg-white hover:bg-brand text-black font-black uppercase text-[11px] tracking-widest transition-colors active:scale-95 shrink-0 flex items-center justify-center"
             >
-              {searching ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Find'}
+              {searching ? <Loader2 size={16} className="animate-spin" /> : 'Find'}
             </button>
           </div>
 
