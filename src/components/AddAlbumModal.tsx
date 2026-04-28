@@ -33,9 +33,17 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     setSearching(true);
     try {
       if (searchSource === 'itunes') {
-        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=5`);
+        // 1. Pobieramy więcej wyników (limit=15), bo część zaraz odrzucimy
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=15`);
         const data = await res.json();
-        setResults(data.results.map((r: any) => ({
+        
+        // 2. Twardy filtr - odrzucamy śmieci
+        const pureAlbums = data.results
+          .filter((r: any) => r.collectionType === 'Album') // Wymagamy dokładnie typu "Album"
+          .filter((r: any) => r.trackCount > 2) // Opcjonalnie: odrzucamy single (płyty z 1 lub 2 utworami)
+          .slice(0, 5); // Bierzemy 5 najlepszych, czystych wyników
+
+        setResults(pureAlbums.map((r: any) => ({
           collectionId: r.collectionId,
           title: r.collectionName, 
           artist: r.artistName,
