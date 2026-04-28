@@ -141,6 +141,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
         drag={!isEdit ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.5}
+        dragDirectionLock={true} // <-- BLOKADA GESTÓW UKOŚNYCH DLA MODALU
         onDragEnd={(_, info) => {
           const swipe = Math.abs(info.offset.x) * info.velocity.x;
           if (swipe < -500 && onNext) { setDirection(1); onNext(); }
@@ -172,6 +173,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
             className="absolute inset-0 z-10 bg-zinc-800"
             drag={!isEdit && album.tracks ? "y" : false}
             dragConstraints={{ top: 0, bottom: 0 }}
+            dragDirectionLock={true} // <-- BLOKADA GESTÓW UKOŚNYCH DLA OKŁADKI
             onDragEnd={(_, info) => { 
               if (info.offset.y < -50 && album.tracks) setShowTracks(true); 
               if (info.offset.y > 50) setShowTracks(false); 
