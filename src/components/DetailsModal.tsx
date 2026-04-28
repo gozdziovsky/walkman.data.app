@@ -114,6 +114,16 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
     exit: (direction: number) => ({ x: direction < 0 ? 300 : -300, opacity: 0 })
   };
 
+  // --- DYNAMICZNY ROZMIAR TYTUŁU ---
+  // Analizuje najdłuższe słowo w tytule i skaluje font w dół, aby zapobiec brzydkiemu łamaniu
+  const getTitleClass = (title: string) => {
+    if (!title) return "text-4xl md:text-6xl";
+    const longestWord = Math.max(...title.split(' ').map(w => w.length));
+    if (longestWord > 14) return "text-2xl md:text-4xl"; // Np. "Supercalifragilistic..."
+    if (longestWord > 10) return "text-3xl md:text-5xl"; // Np. "Balloonerism"
+    return "text-4xl md:text-6xl"; // Standard
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
       
@@ -135,19 +145,18 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         drag={!isEdit ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.2} // Zmniejszona elastyczność (mniej "pływa" przy małym ruchu)
+        dragElastic={0.2} 
         dragDirectionLock={true} 
         onDragEnd={(_, info) => {
-          // NOWA LOGIKA GESTÓW (Mniej wrażliwa)
           const isFlick = Math.abs(info.velocity.x) > 500;
-          const isLongDrag = Math.abs(info.offset.x) > 150; // Wymaga przesunięcia o min. 150px
+          const isLongDrag = Math.abs(info.offset.x) > 150; 
           
           if (isFlick || isLongDrag) {
             if (info.offset.x < 0 && onNext) { setDirection(1); onNext(); }
             else if (info.offset.x > 0 && onPrev) { setDirection(-1); onPrev(); }
           }
         }}
-        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative transform-gpu will-change-transform" 
+        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative" 
         onClick={e => e.stopPropagation()}
       >
         
@@ -168,19 +177,18 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
           )}
 
           <motion.div 
-            className="absolute inset-0 z-10 bg-zinc-800 transform-gpu will-change-transform"
+            className="absolute inset-0 z-10 bg-zinc-800"
             drag={!isEdit && album.tracks ? "y" : false}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.2} // Zmniejszona elastyczność
+            dragElastic={0.2} 
             dragDirectionLock={true} 
             onDragEnd={(_, info) => { 
-              // NOWA LOGIKA GESTÓW PIONOWYCH (Tracklista)
               const isFlickY = Math.abs(info.velocity.y) > 500;
-              const isLongDragY = Math.abs(info.offset.y) > 120; // Wymaga wyraźnego przeciągnięcia
+              const isLongDragY = Math.abs(info.offset.y) > 120; 
               
               if (isFlickY || isLongDragY) {
-                if (info.offset.y < 0 && album.tracks) setShowTracks(true); // Pociągnij w górę
-                else if (info.offset.y > 0) setShowTracks(false); // Pociągnij w dół
+                if (info.offset.y < 0 && album.tracks) setShowTracks(true); 
+                else if (info.offset.y > 0) setShowTracks(false); 
               }
             }}
             animate={{ y: showTracks ? '-100%' : '0%' }}
@@ -295,12 +303,16 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               /* --- TRYB WIDOKU --- */
               <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
                 <div>
-                  <p className="text-brand font-black uppercase tracking-[0.4em] text-[10px] mb-4 italic leading-none flex flex-wrap">
+                  {/* ZMIANA: Naturalny tracking-widest dla artystów */}
+                  <p className="text-brand font-black uppercase tracking-widest text-[10px] mb-4 italic leading-none flex flex-wrap">
                     {renderArtists(album.artist)}
                   </p>
                   
                   <div className="flex justify-between items-start gap-4">
-                    <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic leading-[0.9] mb-8">{album.title}</h2>
+                    {/* ZMIANA: Dynamiczny rozmiar tekstu + zakaz łamania w pół wyrazu (break-normal) */}
+                    <h2 className={`${getTitleClass(album.title)} font-black uppercase tracking-tighter italic leading-[0.9] mb-8 min-w-0 flex-1 break-normal`}>
+                      {album.title}
+                    </h2>
                     
                     <div className="flex flex-col items-end gap-2 shrink-0 mt-2">
                       {album.rating > 0 && (
