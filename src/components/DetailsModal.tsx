@@ -8,13 +8,10 @@ import {
 import { supabase } from '../lib/supabase';
 import type { Album } from '../types/album';
 
-// --- NOWOŚĆ: FUNKCJA DO POBIERANIA MINIATURY ---
-// Używamy tego samego silnika optymalizacji, co w Gridzie, 
-// aby pobrać lekką wersję obrazka do natychmiastowego wyświetlenia.
 const getThumbCover = (url: string) => {
   if (!url) return '';
-  if (url.includes('mzstatic.com')) return url.replace('800x800', '100x100'); // Apple natywna miniatura
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=100&h=100&fit=cover&output=webp&q=70`; // wsrv.nl
+  if (url.includes('mzstatic.com')) return url.replace('800x800', '100x100'); 
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=100&h=100&fit=cover&output=webp&q=70`; 
 };
 
 interface DetailsModalProps {
@@ -34,9 +31,6 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
   const [imagePreview, setImagePreview] = useState<string | null>(album.coverUrl);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [direction, setDirection] = useState(0); 
-  
-  // --- NOWOŚĆ: STAN DLA "PEŁNEJ" OKŁADKI ---
-  // isFullLoaded = true, gdy ostra okładka (800x800) wczyta się w tle.
   const [isFullLoaded, setIsFullLoaded] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,13 +40,8 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
     setImagePreview(album.coverUrl);
     setIsEdit(false);
     setShowTracks(false);
-    
-    // --- NOWOŚĆ: RESET STANU DLA NOWEGO ALBUMU ---
-    setIsFullLoaded(false); // Nowy album -> pełna okładka nie jest jeszcze załadowana
+    setIsFullLoaded(false); 
   }, [album]);
-
-  // renderArtists, linki, aktualizacja, usuwanie, warianty bez zmian...
-  // ...
 
   const renderArtists = (artistString: string) => {
     const exceptions = ["Tyler, The Creator", "Earth, Wind & Fire", "Blood, Sweat & Tears"];
@@ -143,7 +132,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6" onClose={onClose}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
       
       {onPrev && !isEdit && (
         <button onClick={(e) => { e.stopPropagation(); setDirection(-1); onPrev(); }} className="hidden md:flex absolute left-10 p-5 text-white/20 hover:text-brand transition-colors"><ChevronLeft size={48} /></button>
@@ -161,27 +150,47 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
         animate="center"
         exit="exit"
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        drag={!isEdit ? "x" : false}
-        dragConstraints={{ left: 0, right: 0 }}
+        drag={!isEdit} // <--- GŁÓWNA ZMIANA: Drag działa w obu osiach (X i Y)
+        dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={0.2} 
         dragDirectionLock={true} 
         onDragEnd={(_, info) => {
-          const isFlick = Math.abs(info.velocity.x) > 500;
-          const isLongDrag = Math.abs(info.offset.x) > 150; 
-          
-          if (isFlick || isLongDrag) {
-            if (info.offset.x < 0 && onNext) { setDirection(1); onNext(); }
-            else if (info.offset.x > 0 && onPrev) { setDirection(-1); onPrev(); }
+          // Rozpoznajemy, czy ruch był głównie w poziomie czy w pionie
+          const isHorizontal = Math.abs(info.offset.x) > Math.abs(info.offset.y);
+
+          if (isHorizontal) {
+            const isFlick = Math.abs(info.velocity.x) > 500;
+            const isLongDrag = Math.abs(info.offset.x) > 150; 
+            
+            if (isFlick || isLongDrag) {
+              if (info.offset.x < 0 && onNext) { setDirection(1); onNext(); }
+              else if (info.offset.x > 0 && onPrev) { setDirection(-1); onPrev(); }
+            }
+          } else {
+            // --- GESTY PIONOWE NA KARCIE ---
+            if (info.offset.y > 0) { // Tylko ruch w dół
+              const isFlickY = info.velocity.y > 500;
+              const isLongDragY = info.offset.y > 150;
+              if (isFlickY || isLongDragY) {
+                if (showTracks) setShowTracks(false); // Zamknij tracklistę, jeśli otwarta
+                else onClose(); // Zamknij całą kartę
+              }
+            }
           }
         }}
-        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative transform-gpu will-change-transform" 
+        // <--- ZMIANA WYSOKOŚCI: Sztywne h-[95vh] na telefonie (zawsze zajmuje pełną wyznaczoną wysokość)
+        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row h-[95vh] md:h-auto md:max-h-[95vh] shadow-2xl relative transform-gpu will-change-transform" 
         onClick={e => e.stopPropagation()}
       >
         
+        {/* Uchwyt (Pill) dla mobilnego zamykania (Podpowiedź wizualna) */}
+        {!isEdit && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-white/30 backdrop-blur-md rounded-full z-50 md:hidden pointer-events-none" />
+        )}
+
         {/* LEWA STRONA: OKŁADKA / TRACKLISTA */}
         <div className="w-full md:w-1/2 aspect-square relative bg-zinc-950 shrink-0 overflow-hidden">
           
-          {/* ... sekcja tracklisty ... */}
           {!isEdit && album.tracks && (
             <div className="absolute inset-0 bg-zinc-950 p-8 overflow-y-auto no-scrollbar z-0 flex flex-col">
                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
@@ -197,8 +206,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
 
           <motion.div 
             className="absolute inset-0 z-10 bg-zinc-800"
-            // drag, animate, transition... bez zmian
-            drag={!isEdit && album.tracks ? "y" : false}
+            drag={!isEdit ? "y" : false} // <--- Okładka zawsze przyjmuje drag góra/dół
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0.2} 
             dragDirectionLock={true} 
@@ -207,16 +215,18 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               const isLongDragY = Math.abs(info.offset.y) > 120; 
               
               if (isFlickY || isLongDragY) {
-                if (info.offset.y < 0 && album.tracks) setShowTracks(true); 
-                else if (info.offset.y > 0) setShowTracks(false); 
+                if (info.offset.y < 0 && album.tracks) {
+                  setShowTracks(true); // Otwórz tracklistę (Swipe Up)
+                } else if (info.offset.y > 0) {
+                  if (showTracks) setShowTracks(false); // Zamknij tracklistę (Swipe Down)
+                  else onClose(); // Zamknij kartę (Swipe Down na okładce)
+                }
               }
             }}
             animate={{ y: showTracks ? '-100%' : '0%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           >
-            {/* --- KLUCZOWE: HYBRYDOWE ŁADOWANIE OKŁADEK --- */}
             
-            {/* 1. Miniatura (Placeholder) - ładuje się BŁYSKAWICZNIE */}
             {!isEdit && (
               <img 
                 src={getThumbCover(album.coverUrl)} 
@@ -225,7 +235,6 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
               />
             )}
 
-            {/* 2. Pełna okładka (800x800) - ładuje się w tle i wchodzi płynnie */}
             <img 
               src={imagePreview || album.coverUrl} 
               className={`w-full h-full object-cover transition-opacity duration-500 z-10 relative 
@@ -233,10 +242,9 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
                   (isFullLoaded || imagePreview !== album.coverUrl) ? 'opacity-100' : 'opacity-0'
                 }`}
               alt="" 
-              onLoad={() => setIsFullLoaded(true)} // <-- Sygnalizuj załadowanie pełnej wersji
+              onLoad={() => setIsFullLoaded(true)} 
             />
             
-            {/* ... reszta przycisków, edycji, chevron Tracks ... */}
             {isEdit && (
               <div className="absolute inset-0 flex flex-col items-center justify-center p-8 gap-4 z-20">
                 <button onClick={() => fileInputRef.current?.click()} className="bg-white text-black px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-brand transition-colors shadow-2xl">
@@ -280,7 +288,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
           </motion.div>
         </div>
 
-        {/* ... PRAWA STRONA: BEZ ZMIAN ... */}
+        {/* PRAWA STRONA: DANE / FORMULARZ */}
         <div className="p-8 md:p-12 flex-1 overflow-y-auto no-scrollbar text-white text-left bg-zinc-900">
           <AnimatePresence mode="wait">
             
@@ -306,9 +314,15 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
                   <div className="space-y-1"><label className="text-[9px] font-black text-zinc-600 uppercase flex items-center gap-1 ml-1"><Star size={10}/> Rating</label><input type="number" max="10" min="0" className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand/50" value={form.rating} onChange={e => setForm({...form, rating: parseInt(e.target.value)})} /></div>
                 </div>
 
-                <div className="space-y-1"><label className="text-[9px] font-black text-zinc-600 uppercase ml-1">Genre</label><input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand/50 transition-all" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} /></div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black text-zinc-600 uppercase ml-1">Genre</label>
+                  <input className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand/50 transition-all" value={form.genre} onChange={e => setForm({...form, genre: e.target.value})} />
+                </div>
 
-                <div className="space-y-1"><label className="text-[9px] font-black text-zinc-600 uppercase flex items-center gap-1 ml-1"><ListMusic size={10}/> Tracklist</label><textarea className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[11px] font-mono text-zinc-300 h-32 resize-none no-scrollbar outline-none focus:border-brand/50" value={form.tracks || ''} onChange={e => setForm({...form, tracks: e.target.value})} /></div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black text-zinc-600 uppercase flex items-center gap-1 ml-1"><ListMusic size={10}/> Tracklist</label>
+                  <textarea className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-[11px] font-mono text-zinc-300 h-32 resize-none no-scrollbar outline-none focus:border-brand/50" value={form.tracks || ''} onChange={e => setForm({...form, tracks: e.target.value})} />
+                </div>
 
                 <div className="space-y-4 pt-2 border-t border-white/5">
                    <div className="space-y-1">
