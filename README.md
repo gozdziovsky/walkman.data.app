@@ -1,8 +1,6 @@
-from ds_python_interpreter import ds_python_interpreter
+
 
 readme_content = """# 🎧 Walkman Buddy. - Digital Audio Archive
-
-[English](#english) | [Polski](#polski)
 
 ---
 
