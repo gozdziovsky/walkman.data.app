@@ -1,5 +1,5 @@
 
-## English
+## Walkman Buddy.
 
 **Walkman Buddy.** is a responsive web application designed for audiophiles and music collectors to manage their physical and digital archives. Built with a focus on speed, aesthetics, and fluid UX, it handles large collections (400 records for me) with ease.
 
