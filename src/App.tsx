@@ -305,6 +305,7 @@ function App() {
 
       {showAddModal && <AddAlbumModal searchSource={searchSource} discogsToken={discogsToken} onClose={() => setShowAddModal(false)} onSuccess={fetchAlbums} />}
       
+      
       <AnimatePresence>
         {selectedAlbum && (
           <DetailsModal 
