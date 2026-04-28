@@ -17,12 +17,10 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // --- 1. KONFIGURACJA BIEŻĄCA (Tymczasowa dla widoku) ---
   const [filterFormat, setFilterFormat] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
-  // --- 2. KONFIGURACJA DOMYŚLNA (Startup Settings) ---
   const [defaultFormat, setDefaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
   const [defaultStatus, setDefaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
   const [defaultSort, setDefaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
@@ -41,6 +39,18 @@ function App() {
   );
 
   const gridConfig: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
+
+  // --- NOWY: LOCK SCROLL ---
+  useEffect(() => {
+    const isAnyModalOpen = showAddModal || showSettings || showFilters || !!selectedAlbum;
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.height = '100vh';
+    } else {
+      document.body.style.overflow = 'unset';
+      document.body.style.height = 'unset';
+    }
+  }, [showAddModal, showSettings, showFilters, selectedAlbum]);
 
   useEffect(() => {
     fetchAlbums();
@@ -137,13 +147,14 @@ function App() {
 
       <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-green-500 text-black rounded-full flex items-center justify-center shadow-[0_20px_40px_rgba(34,197,94,0.3)] active:scale-90 transition-transform z-50 border-[6px] border-[#09090b]"><Plus size={36} strokeWidth={3} /></button>
 
+      {/* FILTER DRAWER */}
       <AnimatePresence>
         {showFilters && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowFilters(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110]" />
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120]">
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120] shadow-2xl">
               <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-10" />
-              <div className="space-y-10 max-w-lg mx-auto pb-6">
+              <div className="space-y-10 max-w-lg mx-auto pb-6 text-left">
                 <section>
                   <FilterLabel icon={<BookmarkCheck size={14} />} title="Status" />
                   <div className="grid grid-cols-3 gap-3">
