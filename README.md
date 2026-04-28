@@ -5,15 +5,15 @@
 **Walkman Buddy.** is a responsive web application designed for audiophiles and music collectors to manage their physical and digital archives. Built with a focus on speed, aesthetics, and fluid UX, it handles large collections (400 records for me) with ease.
 
 ### ✨ Key Features
-* **Hybrid Interface:**
+* **Interface:**
     * **Mobile-first:** Manual column control (1-4) for perfect visibility on smartphones.
     * **Desktop-optimized:** Intelligent auto-fill grid that creates a beautiful "wall of sound" on large monitors.
 * **Dual-Engine Search:** Integrated with **iTunes API** (for clean digital metadata) and **Discogs API** (for precise physical pressings and tracklists).
-* **Intelligent UI/UX:**
-    * **Dynamic Typography:** Automatically scales long titles (like *Balloonerism*) to prevent layout breaking.
+* **UI/UX:**
+    * **Dynamic Typography:** Automatically scales long titles to prevent layout breaking.
     * **Gesture-driven navigation:** Swipe left/right for browsing, swipe up for tracklists, and swipe down to close.
     * **Corner Ribbons:** Minimalist status indicators (Owned/Wishlist) and tracklist presence.
-* **Visual Excellence:**
+* **Visual:**
     * **On-the-fly Compression:** Uses `wsrv.nl` and Apple CDN to load lightweight thumbnails in the grid, fetching high-res covers only when needed.
 * **System Health:** Real-time connection monitoring for Supabase and Discogs API.
 
