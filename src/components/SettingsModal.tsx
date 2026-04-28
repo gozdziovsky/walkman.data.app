@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, Settings2, Search as SearchIcon, Filter, Disc, BookmarkCheck, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from './lib/supabase';
+import { supabase } from '../lib/supabase';
 import { AddAlbumModal } from './components/AddAlbumModal';
 import { DetailsModal } from './components/DetailsModal';
 import { SettingsModal } from './components/SettingsModal';
