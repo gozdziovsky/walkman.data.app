@@ -28,7 +28,7 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
         const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=5`);
         const data = await res.json();
         setResults(data.results.map((r: any) => ({
-          collectionId: r.collectionId, // POTRZEBNE DO TRACKLISTY
+          collectionId: r.collectionId,
           title: r.collectionName, artist: r.artistName,
           coverUrl: r.artworkUrl100.replace('100x100', '800x800'),
           year: r.releaseDate ? new Date(r.releaseDate).getFullYear() : '',
@@ -46,34 +46,21 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     } finally { setSearching(false); }
   };
 
-  // ZMODYFIKOWANE: Pobieranie tracklisty przy wyborze
   const handleSelect = async (item: any) => {
     setSearching(true);
     let fetchedTracks = '';
-
     try {
       if (searchSource === 'itunes' && item.collectionId) {
-        // Dodatkowe odpytanie o piosenki z danego albumu
         const res = await fetch(`https://itunes.apple.com/lookup?id=${item.collectionId}&entity=song`);
         const data = await res.json();
         const songs = data.results.filter((r: any) => r.wrapperType === 'track');
         fetchedTracks = songs.map((s: any) => `${s.trackNumber}. ${s.trackName}`).join('\n');
       }
     } catch (e) {
-      console.error("Nie udało się pobrać tracklisty", e);
+      console.error("Tracklist fetch failed", e);
     }
 
-    setForm({ 
-      ...form, 
-      artist: item.artist, 
-      title: item.title, 
-      coverUrl: item.coverUrl, 
-      genre: item.genre, 
-      year: parseInt(item.year) || form.year, 
-      spotify_url: '',
-      tracks: fetchedTracks // PRZYPISANIE TRACKLISTY
-    });
-    
+    setForm({ ...form, artist: item.artist, title: item.title, coverUrl: item.coverUrl, genre: item.genre, year: parseInt(item.year) || form.year, tracks: fetchedTracks });
     setImagePreview(item.coverUrl);
     setResults([]);
     setSearching(false);
@@ -98,18 +85,33 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "tween", ease: "easeOut", duration: 0.3 }} className="bg-zinc-900 w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 overflow-y-auto max-h-[95vh] border-t border-white/10 shadow-2xl relative" onClick={e => e.stopPropagation()}>
         <header className="flex justify-between items-center mb-10">
-          <h2 className="text-3xl font-black uppercase italic text-white tracking-tighter">Add <span className="text-brand">Record</span></h2>
+          <h2 className="text-3xl font-black uppercase italic text-white tracking-tighter leading-none">Add <span className="text-brand">Record</span></h2>
           <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
         </header>
 
+        {/* NAPRAWIONY PASEK WYSZUKIWANIA */}
         <div className="relative mb-10 group">
-          <div className="flex items-center bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all shadow-inner">
-            <div className="pl-5 text-zinc-600"><Search size={18} /></div>
-            <input className="flex-1 bg-transparent px-4 py-5 outline-none text-sm font-bold text-white placeholder:text-zinc-700" placeholder={`Search archive via ${searchSource.toUpperCase()}...`} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
-            <button type="button" onClick={search} className="h-full px-8 bg-white hover:bg-brand text-black font-black uppercase text-[10px] tracking-widest transition-colors border-l border-white/5 active:scale-95">
+          <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all shadow-inner h-14">
+            <div className="flex items-center pl-5 text-zinc-600">
+              <Search size={18} />
+            </div>
+            <input 
+              className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700" 
+              placeholder={`Search via ${searchSource.toUpperCase()}...`} 
+              value={query} 
+              onChange={e => setQuery(e.target.value)} 
+              onKeyDown={e => e.key === 'Enter' && search()} 
+            />
+            <button 
+              type="button" 
+              onClick={search} 
+              className="px-8 bg-white hover:bg-brand text-black font-black uppercase text-[10px] tracking-widest transition-colors active:scale-95 shrink-0"
+            >
               {searching ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Find'}
             </button>
           </div>
+
+          {/* LISTA WYNIKÓW */}
           {results.length > 0 && (
             <div className="absolute top-full mt-3 left-0 right-0 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
               {results.map((r, i) => (
