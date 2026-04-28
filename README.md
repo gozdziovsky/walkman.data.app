@@ -1,13 +1,8 @@
 
-
-readme_content = """# 🎧 Walkman Buddy. - Digital Audio Archive
-
----
-
 <a name="english"></a>
 ## English
 
-**Walkman.** is a high-end, responsive web application designed for audiophiles and music collectors to manage their physical and digital archives. Built with a focus on speed, aesthetics, and fluid UX, it handles large collections (400+ records) with ease.
+**Walkman Buddy.** is a responsive web application designed for audiophiles and music collectors to manage their physical and digital archives. Built with a focus on speed, aesthetics, and fluid UX, it handles large collections (400 records for me) with ease.
 
 ### ✨ Key Features
 * **Hybrid Interface:**
