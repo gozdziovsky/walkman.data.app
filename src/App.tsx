@@ -36,12 +36,10 @@ function App() {
     localStorage.setItem('walkman_theme_color', themeColor);
   }, [themeColor]);
 
-  // Filtry Sesji (chwilowe)
   const [filterFormat, setFilterFormat] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
-  // Filtry Startowe (zapisane w systemie)
   const [defaultFormat, setDefaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
   const [defaultStatus, setDefaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
   const [defaultSort, setDefaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
@@ -60,7 +58,6 @@ function App() {
 
   useEffect(() => {
     fetchAlbums();
-    // Aplikujemy ustawienia startowe po załadowaniu apki
     setFilterFormat(defaultFormat);
     setFilterStatus(defaultStatus);
     setSortBy(defaultSort);
@@ -189,17 +186,35 @@ function App() {
                 key={album.id} 
                 ref={idx === visibleAlbums.length - 1 ? lastAlbumElementRef : null}
                 onClick={() => setSelectedAlbum(album)} 
-                className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform transform-gpu"
+                className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform transform-gpu shadow-xl"
               >
                 <img src={album.coverUrl} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={album.title} />
-                {album.tracks && <div className="absolute top-4 left-4 text-white/50 bg-black/40 backdrop-blur-md p-1.5 rounded-full shadow-lg z-10"><ListMusic size={12} /></div>}
+                
+                {/* --- NOWE: MINIMALISTYCZNE TRÓJKĄTY W ROGACH --- */}
+                
+                {/* 1. Tracklista (Lewy Górny Róg) - widoczne tylko, gdy są tracki */}
+                {album.tracks && (
+                  <div 
+                    className="absolute top-0 left-0 w-9 h-9 bg-black/60 backdrop-blur-md z-10 pointer-events-none" 
+                    style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+                  >
+                    <ListMusic size={11} className="absolute top-1.5 left-1.5 text-white/90" />
+                  </div>
+                )}
+
+                {/* 2. Status (Prawy Górny Róg) - kolor odpowiada statusowi */}
+                <div 
+                  className={`absolute top-0 right-0 w-7 h-7 z-10 pointer-events-none opacity-95 transition-colors duration-300 ${album.status === 'MAM' ? 'bg-brand' : 'bg-orange-500'}`} 
+                  style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}
+                />
+
+                {/* Gradient tekstu dla 1 lub 2 kolumn */}
                 {cols <= 2 && (
                   <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none">
                     <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
                     <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
                   </div>
                 )}
-                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full z-10 ${album.status === 'MAM' ? 'bg-brand shadow-lg shadow-brand/50' : 'bg-orange-500 shadow-lg shadow-orange-500/50'}`} />
               </div>
             ))}
             {visibleCount < processedAlbums.length && (
@@ -215,7 +230,7 @@ function App() {
         <Plus size={36} strokeWidth={3} />
       </button>
 
-      {/* SZUFLADA FILTRÓW SESJI */}
+      {/* MODALE */}
       <AnimatePresence>
         {showFilters && (
           <>
@@ -254,7 +269,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* POPRAWIONY MODAL USTAWIEN (Przekazuje funkcje zapisu defaultów do LocalStorage) */}
       {showSettings && (
         <SettingsModal 
           cols={cols} setCols={setCols} 
