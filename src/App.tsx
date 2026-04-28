@@ -159,20 +159,20 @@ function App() {
           <p className="text-[8px] font-black text-zinc-700 uppercase tracking-[0.5em] mt-3 leading-none">Digital Audio Archive</p>
         </div>
 
-        {/* DASHBOARD Z 3 LICZNIKAMI */}
-        <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-6 shadow-2xl">
-          <div className="flex gap-6 text-left overflow-x-auto no-scrollbar py-1">
-            <StatBox label="Total" val={stats.total} />
-            <StatBox label="Owned" val={stats.owned} colorClass="text-brand" />
-            <StatBox label="Wanted" val={stats.wanted} colorClass="text-orange-500" />
+        {/* DASHBOARD - TERAZ INTERAKTYWNY */}
+        <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-4 shadow-2xl">
+          <div className="flex gap-1 text-left overflow-x-auto no-scrollbar items-center">
+            <StatBox label="Total" val={stats.total} active={filterStatus === 'ALL'} onClick={() => setFilterStatus('ALL')} />
+            <StatBox label="Owned" val={stats.owned} colorClass="text-brand" active={filterStatus === 'MAM'} onClick={() => setFilterStatus('MAM')} />
+            <StatBox label="Wanted" val={stats.wanted} colorClass="text-orange-500" active={filterStatus === 'SZUKAM'} onClick={() => setFilterStatus('SZUKAM')} />
           </div>
 
-          <div className="flex items-center gap-1 shrink-0 ml-2">
-            <button onClick={() => setShowFilters(true)} className="p-4 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90 relative">
+          <div className="flex items-center gap-1 shrink-0 ml-2 mr-2">
+            <button onClick={() => setShowFilters(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90 relative">
               <Filter size={18} />
               {activeFiltersCount > 0 && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-brand rounded-full border-2 border-[#09090b]" />}
             </button>
-            <button onClick={() => setShowSettings(true)} className="p-4 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90">
+            <button onClick={() => setShowSettings(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90">
               <Settings2 size={18} />
             </button>
           </div>
@@ -216,7 +216,8 @@ function App() {
               <div 
                 key={album.id} 
                 onClick={() => setSelectedAlbum(album)} 
-                className="group relative aspect-square bg-zinc-900 rounded-[1.8rem] overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                // ZMIANA: rounded-[1.8rem] -> rounded-xl (Mniejsze zaokrąglenia)
+                className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
               >
                 <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
                 
@@ -321,12 +322,17 @@ function App() {
   );
 }
 
-// --- KOMPONENTY POMOCNICZE (W TYM SAMYM PLIKU) ---
-const StatBox = ({ label, val, colorClass = "text-zinc-300" }: any) => (
-  <div className="flex flex-col shrink-0">
-    <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest mb-1 leading-none">{label}</span>
+// --- KOMPONENTY POMOCNICZE ---
+
+// INTERAKTYWNY STATBOX
+const StatBox = ({ label, val, colorClass = "text-zinc-300", active, onClick }: any) => (
+  <button 
+    onClick={onClick} 
+    className={`flex flex-col shrink-0 text-left transition-all active:scale-95 px-3 py-2 rounded-xl border ${active ? 'bg-zinc-800/80 border-white/10 shadow-lg' : 'border-transparent hover:bg-zinc-800/40 opacity-70 hover:opacity-100'}`}
+  >
+    <span className="text-[7px] font-black text-zinc-500 uppercase tracking-widest mb-1 leading-none">{label}</span>
     <span className={`text-sm font-mono font-bold ${colorClass}`}>{val.toString().padStart(2, '0')}</span>
-  </div>
+  </button>
 );
 
 const FilterBtn = ({ label, active, onClick, activeClass = 'bg-white text-black' }: any) => (
