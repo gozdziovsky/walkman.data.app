@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { 
   Plus, 
   Settings2, 
@@ -8,7 +8,8 @@ import {
   BookmarkCheck, 
   ArrowUpDown, 
   X, 
-  ListMusic 
+  ListMusic,
+  Loader2 // <-- Dodano Loader2 do importów
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './lib/supabase';
@@ -20,64 +21,41 @@ import type { Album } from './types/album';
 type SortOption = 'recent' | 'artist' | 'album' | 'year';
 
 function App() {
-  // --- 1. STANY GŁÓWNE ---
   const [albums, setAlbums] = useState<Album[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   
-  // --- 2. MODALE ---
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // --- 3. MOTYW (DYNAMICZNY CSS) ---
-  const [themeColor, setThemeColor] = useState<string>(() => 
-    localStorage.getItem('walkman_theme_color') || '#22c55e'
-  );
+  const [themeColor, setThemeColor] = useState<string>(() => localStorage.getItem('walkman_theme_color') || '#22c55e');
 
   useEffect(() => {
     document.documentElement.style.setProperty('--brand-color', themeColor);
     localStorage.setItem('walkman_theme_color', themeColor);
   }, [themeColor]);
 
-  // --- 4. FILTROWANIE I SORTOWANIE (SESJA) ---
   const [filterFormat, setFilterFormat] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
-  // --- 5. USTAWIENIA DOMYŚLNE (LOCAL STORAGE) ---
   const [defaultFormat, setDefaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
   const [defaultStatus, setDefaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
   const [defaultSort, setDefaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
 
-  const [cols, setCols] = useState<number>(() => {
-    const saved = localStorage.getItem('walkman_cols');
-    return saved ? parseInt(saved) : 3;
-  });
-
-  const [searchSource, setSearchSource] = useState<'itunes' | 'discogs'>(() => 
-    (localStorage.getItem('walkman_search_source') as 'itunes' | 'discogs') || 'itunes'
-  );
-
-  const [discogsToken, setDiscogsToken] = useState<string>(() => 
-    localStorage.getItem('walkman_discogs_token') || ''
-  );
+  const [cols, setCols] = useState<number>(() => parseInt(localStorage.getItem('walkman_cols') || '3'));
+  const [searchSource, setSearchSource] = useState<'itunes' | 'discogs'>(() => (localStorage.getItem('walkman_search_source') as 'itunes' | 'discogs') || 'itunes');
+  const [discogsToken, setDiscogsToken] = useState<string>(() => localStorage.getItem('walkman_discogs_token') || '');
 
   const gridConfig: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
 
-  // --- 6. BLOKADA SCROLLA ---
   useEffect(() => {
     const isAnyModalOpen = showAddModal || showSettings || showFilters || !!selectedAlbum;
-    if (isAnyModalOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100vh';
-    } else {
-      document.body.style.overflow = 'unset';
-      document.body.style.height = 'unset';
-    }
+    document.body.style.overflow = isAnyModalOpen ? 'hidden' : 'unset';
+    document.body.style.height = isAnyModalOpen ? '100vh' : 'unset';
   }, [showAddModal, showSettings, showFilters, selectedAlbum]);
 
-  // --- 7. POBIERANIE DANYCH ---
   useEffect(() => {
     fetchAlbums();
     setFilterFormat(defaultFormat);
@@ -90,7 +68,6 @@ function App() {
     if (data) setAlbums(data);
   };
 
-  // --- 8. LOGIKA PRZETWARZANIA LISTY ---
   const processedAlbums = useMemo(() => {
     let result = [...albums];
     if (searchTerm) {
@@ -113,30 +90,40 @@ function App() {
     return result;
   }, [albums, searchTerm, filterFormat, filterStatus, sortBy]);
 
-  // --- 9. STATYSTYKI (TOTAL / OWNED / WANTED) ---
+  // --- INFINITE SCROLL LOGIC ---
+  const [visibleCount, setVisibleCount] = useState(40);
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  // Resetujemy licznik widocznych albumów przy każdej zmianie filtrów
+  useEffect(() => {
+    setVisibleCount(40);
+  }, [searchTerm, filterFormat, filterStatus, sortBy]);
+
+  const lastAlbumElementRef = useCallback((node: HTMLDivElement) => {
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && visibleCount < processedAlbums.length) {
+        // Gdy scroll dotrze do końca, dorzuć kolejne 40 kafelków
+        setVisibleCount(prev => prev + 40);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [visibleCount, processedAlbums.length]);
+
+  const visibleAlbums = processedAlbums.slice(0, visibleCount);
+
   const stats = useMemo(() => ({
     total: albums.length,
     owned: albums.filter(a => a.status === 'MAM').length,
     wanted: albums.filter(a => a.status === 'SZUKAM').length,
   }), [albums]);
 
-  // --- 10. NAWIGACJA MIĘDZY ALBUMAMI (SWIPE) ---
   const currentIndex = useMemo(() => 
     processedAlbums.findIndex(a => a.id === selectedAlbum?.id),
     [processedAlbums, selectedAlbum]
   );
-
-  const goToNext = () => {
-    if (currentIndex < processedAlbums.length - 1) {
-      setSelectedAlbum(processedAlbums[currentIndex + 1]);
-    }
-  };
-
-  const goToPrev = () => {
-    if (currentIndex > 0) {
-      setSelectedAlbum(processedAlbums[currentIndex - 1]);
-    }
-  };
 
   const activeFiltersCount = (filterFormat !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (sortBy !== defaultSort ? 1 : 0);
 
@@ -159,7 +146,6 @@ function App() {
           <p className="text-[8px] font-black text-zinc-700 uppercase tracking-[0.5em] mt-3 leading-none">Digital Audio Archive</p>
         </div>
 
-        {/* DASHBOARD - TERAZ INTERAKTYWNY */}
         <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-4 shadow-2xl">
           <div className="flex gap-1 text-left overflow-x-auto no-scrollbar items-center">
             <StatBox label="Total" val={stats.total} active={filterStatus === 'ALL'} onClick={() => setFilterStatus('ALL')} />
@@ -178,7 +164,6 @@ function App() {
           </div>
         </div>
 
-        {/* WYSZUKIWARKA Z "X" */}
         <div className="relative">
           <div className="absolute inset-y-0 left-5 flex items-center text-zinc-600">
             <SearchIcon size={14} />
@@ -206,28 +191,26 @@ function App() {
         </div>
       </header>
 
-      {/* GŁÓWNY GRID */}
       <main className="px-6 mt-4">
         {processedAlbums.length === 0 ? (
           <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.4em] italic">No records found</p></div>
         ) : (
-          <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`}>
-            {processedAlbums.map((album) => (
+          <div className={`grid ${gridConfig[cols]} gap-4 transition-all duration-500`} style={{ contentVisibility: 'auto' }}>
+            {visibleAlbums.map((album) => (
               <div 
                 key={album.id} 
                 onClick={() => setSelectedAlbum(album)} 
                 className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
-                style={{ contentVisibility: 'auto' }} // <-- DODAJ TO
               >
+                {/* Leniwe ładowanie obrazków uwalnia procesor */}
                 <img 
                   src={album.coverUrl} 
                   loading="lazy" 
-                  decoding="async" 
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                   alt={album.title} 
                 />
                 
-                {/* Ikonka Tracklisty */}
                 {album.tracks && (
                   <div className="absolute top-4 left-4 text-white/50 bg-black/40 backdrop-blur-md p-1.5 rounded-full shadow-lg z-10">
                     <ListMusic size={12} />
@@ -240,24 +223,30 @@ function App() {
                     <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
                   </div>
                 )}
-                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full z-10 ${album.status === 'MAM' ? 'bg-brand shadow-lg shadow-brand/50' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
+                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full z-10 ${album.status === 'MAM' ? 'bg-brand shadow-lg shadow-brand/50' : 'bg-orange-500 shadow-lg shadow-orange-500/50'}`} />
               </div>
             ))}
+            
+            {/* INVISIBLE TRIGGER DLA INFINITE SCROLL */}
+            {visibleCount < processedAlbums.length && (
+              <div ref={lastAlbumElementRef} className="w-full h-20 col-span-full flex items-center justify-center">
+                <Loader2 className="animate-spin text-zinc-600" size={24} />
+              </div>
+            )}
           </div>
         )}
       </main>
 
-      {/* PRZYCISK FAB */}
       <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-brand text-black rounded-full flex items-center justify-center shadow-2xl shadow-brand/30 active:scale-90 transition-transform z-50 border-[6px] border-[#09090b]">
         <Plus size={36} strokeWidth={3} />
       </button>
 
-      {/* SZUFLADA FILTRÓW */}
+      {/* MODALE (Filtry, Ustawienia, Detale) */}
       <AnimatePresence>
         {showFilters && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowFilters(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110]" />
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120] shadow-2xl">
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120] shadow-2xl transform-gpu will-change-transform">
               <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-10" />
               <div className="space-y-10 max-w-lg mx-auto pb-6 text-left">
                 <section>
@@ -291,7 +280,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* MODAL USTAWIENIA */}
       {showSettings && (
         <SettingsModal 
           cols={cols} setCols={setCols} 
@@ -305,10 +293,8 @@ function App() {
         />
       )}
 
-      {/* MODAL DODAWANIA */}
       {showAddModal && <AddAlbumModal searchSource={searchSource} discogsToken={discogsToken} onClose={() => setShowAddModal(false)} onSuccess={fetchAlbums} />}
       
-      {/* MODAL DETALI (Z NAWIGACJĄ SWIPE) */}
       <AnimatePresence>
         {selectedAlbum && (
           <DetailsModal 
@@ -319,8 +305,8 @@ function App() {
               setSearchTerm(name);
               setSelectedAlbum(null);
             }}
-            onNext={currentIndex < processedAlbums.length - 1 ? goToNext : undefined}
-            onPrev={currentIndex > 0 ? goToPrev : undefined}
+            onNext={currentIndex < processedAlbums.length - 1 ? () => setSelectedAlbum(processedAlbums[currentIndex + 1]) : undefined}
+            onPrev={currentIndex > 0 ? () => setSelectedAlbum(processedAlbums[currentIndex - 1]) : undefined}
           />
         )}
       </AnimatePresence>
@@ -329,8 +315,6 @@ function App() {
 }
 
 // --- KOMPONENTY POMOCNICZE ---
-
-// INTERAKTYWNY STATBOX
 const StatBox = ({ label, val, colorClass = "text-zinc-300", active, onClick }: any) => (
   <button 
     onClick={onClick} 
