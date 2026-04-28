@@ -13,6 +13,10 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // --- NOWOŚĆ: LOKALNY STAN WYSZUKIWARKI ---
+  // Inicjalizuje się domyślnym ustawieniem z App.tsx, ale pozwala na szybką zmianę w modalu
+  const [localSource, setLocalSource] = useState<'itunes' | 'discogs'>(searchSource);
+
   const [form, setForm] = useState({
     artist: '', 
     title: '', 
@@ -31,13 +35,14 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     if (!query) return;
     setSearching(true);
     try {
-      if (searchSource === 'itunes') {
+      // Używamy localSource zamiast globalnego searchSource
+      if (localSource === 'itunes') {
         const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=50&country=PL`);
         const data = await res.json();
         
         const pureAlbums = data.results
-          .filter((r: any) => r.trackCount > 2) 
-          .slice(0, 15); // <-- ZMIANA: Zwiększono limit do 15
+          .filter((r: any) => r.trackCount > 2) // Odsiewamy single
+          .slice(0, 15); // Zostawiamy top 15
 
         setResults(pureAlbums.map((r: any) => ({
           collectionId: r.collectionId,
@@ -48,8 +53,10 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           genre: r.primaryGenreName
         })));
       } else {
-        if (!discogsToken) return;
-        // <-- ZMIANA: Zwiększono per_page do 15 dla Discogs
+        if (!discogsToken) {
+          alert("Brak tokenu Discogs! Dodaj go w Ustawieniach Systemu.");
+          return;
+        }
         const res = await fetch(`https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&per_page=15&token=${discogsToken}`);
         const data = await res.json();
         setResults(data.results.map((r: any) => {
@@ -66,7 +73,8 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     setSearching(true);
     let fetchedTracks = '';
     
-    if (searchSource === 'itunes' && item.collectionId) {
+    // Dociąganie tracklisty tylko jeśli źródłem w tym momencie jest iTunes
+    if (localSource === 'itunes' && item.collectionId) {
       try {
         const res = await fetch(`https://itunes.apple.com/lookup?id=${item.collectionId}&entity=song`);
         const data = await res.json();
@@ -114,17 +122,41 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6" onClick={onClose}>
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "tween", ease: "easeOut", duration: 0.3 }} className="bg-zinc-900 w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 overflow-y-auto max-h-[95vh] border-t border-white/10 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+        
         <header className="flex justify-between items-center mb-10">
           <h2 className="text-3xl font-black uppercase italic text-white tracking-tighter leading-none">Add <span className="text-brand">Record</span></h2>
           <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
         </header>
 
         <div className="relative mb-10 group w-full">
+          
+          {/* --- NOWY PRZEŁĄCZNIK ŹRÓDŁA --- */}
+          <div className="flex justify-between items-end mb-3 px-1">
+            <span className="text-[8px] font-black uppercase text-zinc-500 tracking-widest mb-1">Search Engine</span>
+            <div className="flex items-center gap-1 bg-zinc-950 rounded-xl p-1 border border-white/5">
+              <button 
+                type="button" 
+                onClick={() => setLocalSource('itunes')} 
+                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${localSource === 'itunes' ? 'bg-white text-black shadow-md' : 'text-zinc-600 hover:text-white'}`}
+              >
+                iTunes
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setLocalSource('discogs')} 
+                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${localSource === 'discogs' ? 'bg-brand text-black shadow-md' : 'text-zinc-600 hover:text-white'}`}
+              >
+                Discogs
+              </button>
+            </div>
+          </div>
+
+          {/* Pasek wyszukiwania */}
           <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all shadow-inner h-14 w-full">
             <div className="flex items-center justify-center pl-5 text-zinc-600 shrink-0"><Search size={18} /></div>
             <input 
               className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700 min-w-0" 
-              placeholder={`Search via ${searchSource.toUpperCase()}...`} 
+              placeholder={`Search via ${localSource.toUpperCase()}...`} 
               value={query} 
               onChange={(e) => setQuery(e.target.value)} 
               onKeyDown={(e) => e.key === 'Enter' && search()} 
@@ -134,7 +166,7 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
             </button>
           </div>
 
-          {/* ZMIANA: Dodano max-h-[300px] i overflow-y-auto dla przewijanej listy */}
+          {/* Wyniki wyszukiwania z max-height i scrollowaniem */}
           {results.length > 0 && (
             <div className="absolute top-full mt-3 left-0 right-0 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl">
               <div className="max-h-[300px] overflow-y-auto no-scrollbar">
@@ -152,6 +184,7 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           )}
         </div>
 
+        {/* Reszta potężnego formularza */}
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="flex flex-col md:flex-row gap-8">
             <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-52 aspect-square bg-zinc-950 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative shrink-0 group hover:border-brand/30 transition-colors">
