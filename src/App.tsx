@@ -21,50 +21,37 @@ import type { Album } from './types/album';
 type SortOption = 'recent' | 'artist' | 'album' | 'year';
 
 function App() {
-  // --- 1. STANY DANYCH I MODALI ---
   const [albums, setAlbums] = useState<Album[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
+  
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // --- 2. MOTYW KOLORYSTYCZNY ---
-  const [themeColor, setThemeColor] = useState<string>(() => 
-    localStorage.getItem('walkman_theme_color') || '#22c55e'
-  );
+  const [themeColor, setThemeColor] = useState<string>(() => localStorage.getItem('walkman_theme_color') || '#22c55e');
 
   useEffect(() => {
     document.documentElement.style.setProperty('--brand-color', themeColor);
     localStorage.setItem('walkman_theme_color', themeColor);
   }, [themeColor]);
 
-  // --- 3. FILTROWANIE I SORTOWANIE (SESJA) ---
+  // Filtry Sesji (chwilowe)
   const [filterFormat, setFilterFormat] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
-  // --- 4. USTAWIENIA DOMYŚLNE (STARTUP) ---
-  const [defaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
-  const [defaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
-  const [defaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
+  // Filtry Startowe (zapisane w systemie)
+  const [defaultFormat, setDefaultFormat] = useState<string>(() => localStorage.getItem('walkman_default_format') || 'ALL');
+  const [defaultStatus, setDefaultStatus] = useState<string>(() => localStorage.getItem('walkman_default_status') || 'ALL');
+  const [defaultSort, setDefaultSort] = useState<SortOption>(() => (localStorage.getItem('walkman_default_sort') as SortOption) || 'recent');
 
-  const [cols, setCols] = useState<number>(() => {
-    const saved = localStorage.getItem('walkman_cols');
-    return saved ? parseInt(saved) : 3;
-  });
-
-  const [searchSource, setSearchSource] = useState<'itunes' | 'discogs'>(() => 
-    (localStorage.getItem('walkman_search_source') as 'itunes' | 'discogs') || 'itunes'
-  );
-
-  const [discogsToken, setDiscogsToken] = useState<string>(() => 
-    localStorage.getItem('walkman_discogs_token') || ''
-  );
+  const [cols, setCols] = useState<number>(() => parseInt(localStorage.getItem('walkman_cols') || '3'));
+  const [searchSource, setSearchSource] = useState<'itunes' | 'discogs'>(() => (localStorage.getItem('walkman_search_source') as 'itunes' | 'discogs') || 'itunes');
+  const [discogsToken, setDiscogsToken] = useState<string>(() => localStorage.getItem('walkman_discogs_token') || '');
 
   const gridConfig: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
 
-  // --- 5. EFEKTY I POBIERANIE ---
   useEffect(() => {
     const isAnyModalOpen = showAddModal || showSettings || showFilters || !!selectedAlbum;
     document.body.style.overflow = isAnyModalOpen ? 'hidden' : 'unset';
@@ -73,7 +60,7 @@ function App() {
 
   useEffect(() => {
     fetchAlbums();
-    // Aplikuj domyślne ustawienia przy starcie
+    // Aplikujemy ustawienia startowe po załadowaniu apki
     setFilterFormat(defaultFormat);
     setFilterStatus(defaultStatus);
     setSortBy(defaultSort);
@@ -84,7 +71,6 @@ function App() {
     if (data) setAlbums(data);
   };
 
-  // --- 6. LOGIKA PRZETWARZANIA LISTY ---
   const processedAlbums = useMemo(() => {
     let result = [...albums];
     if (searchTerm) {
@@ -107,12 +93,11 @@ function App() {
     return result;
   }, [albums, searchTerm, filterFormat, filterStatus, sortBy]);
 
-  // --- 7. INFINITE SCROLL (DLA 400+ ALBUMÓW) ---
   const [visibleCount, setVisibleCount] = useState(40);
   const observer = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    setVisibleCount(40); // Resetuj przy zmianie filtrów
+    setVisibleCount(40);
   }, [searchTerm, filterFormat, filterStatus, sortBy]);
 
   const lastAlbumElementRef = useCallback((node: HTMLDivElement) => {
@@ -127,21 +112,16 @@ function App() {
 
   const visibleAlbums = processedAlbums.slice(0, visibleCount);
 
-  // --- 8. STATYSTYKI ---
   const stats = useMemo(() => ({
     total: albums.length,
     owned: albums.filter(a => a.status === 'MAM').length,
     wanted: albums.filter(a => a.status === 'SZUKAM').length,
   }), [albums]);
 
-  // --- 9. NAWIGACJA MIĘDZY DETALAMI ---
   const currentIndex = useMemo(() => 
     processedAlbums.findIndex(a => a.id === selectedAlbum?.id),
     [processedAlbums, selectedAlbum]
   );
-
-  const goToNext = () => { if (currentIndex < processedAlbums.length - 1) setSelectedAlbum(processedAlbums[currentIndex + 1]); };
-  const goToPrev = () => { if (currentIndex > 0) setSelectedAlbum(processedAlbums[currentIndex - 1]); };
 
   const activeFiltersCount = (filterFormat !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (sortBy !== defaultSort ? 1 : 0);
 
@@ -164,7 +144,6 @@ function App() {
           <p className="text-[8px] font-black text-zinc-700 uppercase tracking-[0.5em] mt-3 leading-none">Digital Audio Archive</p>
         </div>
 
-        {/* DASHBOARD - INTERAKTYWNE LICZNIKI */}
         <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-4 shadow-2xl">
           <div className="flex gap-1 text-left overflow-x-auto no-scrollbar items-center">
             <StatBox label="Total" val={stats.total} active={filterStatus === 'ALL'} onClick={() => setFilterStatus('ALL')} />
@@ -183,7 +162,6 @@ function App() {
           </div>
         </div>
 
-        {/* WYSZUKIWARKA */}
         <div className="relative">
           <div className="absolute inset-y-0 left-5 flex items-center text-zinc-600"><SearchIcon size={14} /></div>
           <input 
@@ -201,7 +179,6 @@ function App() {
         </div>
       </header>
 
-      {/* GŁÓWNY GRID */}
       <main className="px-6 mt-4">
         {processedAlbums.length === 0 ? (
           <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.4em] italic">No records found</p></div>
@@ -212,14 +189,10 @@ function App() {
                 key={album.id} 
                 ref={idx === visibleAlbums.length - 1 ? lastAlbumElementRef : null}
                 onClick={() => setSelectedAlbum(album)} 
-                className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform transform-gpu shadow-xl"
+                className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform transform-gpu"
               >
                 <img src={album.coverUrl} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={album.title} />
-                {album.tracks && (
-                  <div className="absolute top-4 left-4 text-white/50 bg-black/40 backdrop-blur-md p-1.5 rounded-full shadow-lg z-10">
-                    <ListMusic size={12} />
-                  </div>
-                )}
+                {album.tracks && <div className="absolute top-4 left-4 text-white/50 bg-black/40 backdrop-blur-md p-1.5 rounded-full shadow-lg z-10"><ListMusic size={12} /></div>}
                 {cols <= 2 && (
                   <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent p-5 flex flex-col justify-end text-left pointer-events-none">
                     <p className="text-[8px] font-black uppercase text-brand italic mb-1.5 leading-none">{album.artist}</p>
@@ -238,12 +211,11 @@ function App() {
         )}
       </main>
 
-      {/* PRZYCISK FAB */}
       <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-brand text-black rounded-full flex items-center justify-center shadow-2xl shadow-brand/30 active:scale-90 transition-transform z-50 border-[6px] border-[#09090b]">
         <Plus size={36} strokeWidth={3} />
       </button>
 
-      {/* SZUFLADA FILTRÓW */}
+      {/* SZUFLADA FILTRÓW SESJI */}
       <AnimatePresence>
         {showFilters && (
           <>
@@ -282,13 +254,14 @@ function App() {
         )}
       </AnimatePresence>
 
+      {/* POPRAWIONY MODAL USTAWIEN (Przekazuje funkcje zapisu defaultów do LocalStorage) */}
       {showSettings && (
         <SettingsModal 
           cols={cols} setCols={setCols} 
           themeColor={themeColor} setThemeColor={setThemeColor}
-          defaultFormat={filterFormat} setDefaultFormat={() => {}} // Placeholder, settings zarządza tym wewnętrznie
-          defaultStatus={filterStatus} setDefaultStatus={() => {}}
-          defaultSort={sortBy} setDefaultSort={() => {}}
+          defaultFormat={defaultFormat} setDefaultFormat={(v: string) => { localStorage.setItem('walkman_default_format', v); setDefaultFormat(v); }}
+          defaultStatus={defaultStatus} setDefaultStatus={(v: string) => { localStorage.setItem('walkman_default_status', v); setDefaultStatus(v); }}
+          defaultSort={defaultSort} setDefaultSort={(v: any) => { localStorage.setItem('walkman_default_sort', v); setDefaultSort(v); }}
           searchSource={searchSource} setSearchSource={setSearchSource}
           discogsToken={discogsToken} setDiscogsToken={setDiscogsToken}
           onClose={() => setShowSettings(false)} 
@@ -302,8 +275,8 @@ function App() {
           <DetailsModal 
             album={selectedAlbum} onClose={() => setSelectedAlbum(null)} onUpdateSuccess={fetchAlbums}
             onArtistClick={(n:string)=>{setSearchTerm(n);setSelectedAlbum(null);}}
-            onNext={currentIndex < processedAlbums.length - 1 ? goToNext : undefined}
-            onPrev={currentIndex > 0 ? goToPrev : undefined}
+            onNext={currentIndex < processedAlbums.length - 1 ? () => setSelectedAlbum(processedAlbums[currentIndex + 1]) : undefined}
+            onPrev={currentIndex > 0 ? () => setSelectedAlbum(processedAlbums[currentIndex - 1]) : undefined}
           />
         )}
       </AnimatePresence>
@@ -311,7 +284,6 @@ function App() {
   );
 }
 
-// --- KOMPONENTY POMOCNICZE (W TYM SAMYM PLIKU) ---
 const StatBox = ({ label, val, colorClass = "text-zinc-300", active, onClick }: any) => (
   <button 
     onClick={onClick} 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, LayoutGrid, Zap, ChevronDown, Key, Palette, 
-  RefreshCw, Database, Globe, Activity 
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -38,7 +38,6 @@ export const SettingsModal = ({
   }, [discogsToken]);
 
   const checkConnections = async () => {
-    // 1. Sprawdź Supabase
     try {
       const { error } = await supabase.from('albums').select('id').limit(1);
       setDbConnected(!error);
@@ -46,7 +45,6 @@ export const SettingsModal = ({
       setDbConnected(false);
     }
 
-    // 2. Sprawdź Discogs
     if (!discogsToken) {
       setDiscogsConnected(false);
     } else {
@@ -133,6 +131,7 @@ export const SettingsModal = ({
             <AnimatePresence>
               {isStartupOpen && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden bg-black/20 rounded-2xl p-5 space-y-6">
+                  
                   <div className="space-y-2">
                     <p className="text-[9px] font-black uppercase text-zinc-600 mb-2">Default Status</p>
                     <div className="grid grid-cols-3 gap-2">
@@ -141,48 +140,63 @@ export const SettingsModal = ({
                       ))}
                     </div>
                   </div>
+
                   <div className="space-y-2">
-                    <p className="text-[9px] font-black uppercase text-zinc-600 mb-2">Default Sort</p>
+                    <p className="text-[9px] font-black uppercase text-zinc-600 mb-2">Default Format</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {['ALL', 'FLAC', 'MP3', 'Hi-Res'].map(f => (
+                        <button key={f} type="button" onClick={() => setDefaultFormat(f)} className={`py-2.5 rounded-lg text-[9px] font-black border transition-all ${defaultFormat === f ? 'border-brand text-brand bg-brand/5' : 'border-white/5 text-zinc-600 hover:text-white'}`}>{f}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black uppercase text-zinc-600 mb-2">Default Sort Order</p>
                     <div className="grid grid-cols-2 gap-2">
                       {[{id:'recent', l:'RECENT'}, {id:'artist', l:'ARTIST A-Z'}, {id:'album', l:'ALBUM A-Z'}, {id:'year', l:'YEAR'}].map(opt => (
                         <button key={opt.id} type="button" onClick={() => setDefaultSort(opt.id as any)} className={`py-3 rounded-lg text-[9px] font-black uppercase border transition-all ${defaultSort === opt.id ? 'border-brand text-brand bg-brand/5' : 'border-white/5 text-zinc-600 hover:text-white'}`}>{opt.l}</button>
                       ))}
                     </div>
                   </div>
+
                 </motion.div>
               )}
             </AnimatePresence>
           </section>
 
-          {/* --- NOWA SEKCJA: SYSTEM HEALTH & REFRESH --- */}
-          <section className="pt-6 border-t border-white/5 mt-6 space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex gap-6">
-                <div className="flex items-center gap-2">
-                  <StatusDot active={dbConnected} />
-                  <div className="flex flex-col">
-                    <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest leading-none">Database</span>
-                    <span className="text-[9px] font-bold text-zinc-400 mt-1 uppercase leading-none">{dbConnected ? 'Online' : 'Offline'}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusDot active={discogsConnected} />
-                  <div className="flex flex-col">
-                    <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest leading-none">Discogs</span>
-                    <span className="text-[9px] font-bold text-zinc-400 mt-1 uppercase leading-none">{discogsConnected ? 'Online' : 'No Token'}</span>
-                  </div>
+          {/* --- SYSTEM HEALTH & REFRESH (Pancerny układ pionowy) --- */}
+          <section className="pt-6 border-t border-white/5 mt-6 flex flex-col gap-3">
+            <div className="flex items-center justify-around bg-black/40 p-4 rounded-2xl border border-white/5">
+              
+              <div className="flex items-center gap-3">
+                <StatusDot active={dbConnected} />
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest leading-none">Database</span>
+                  <span className={`text-[10px] font-bold mt-1 uppercase leading-none ${dbConnected ? 'text-green-500' : 'text-red-500'}`}>{dbConnected ? 'Online' : 'Offline'}</span>
                 </div>
               </div>
 
-              <button 
-                onClick={handleForceRefresh}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all active:scale-95 group"
-              >
-                <RefreshCw size={12} className="text-zinc-500 group-hover:text-brand transition-colors" />
-                <span className="text-[9px] font-black uppercase text-zinc-500 group-hover:text-white tracking-widest">Force Refresh</span>
-              </button>
+              <div className="w-px h-8 bg-white/10" />
+
+              <div className="flex items-center gap-3">
+                <StatusDot active={discogsConnected} />
+                <div className="flex flex-col text-right">
+                  <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest leading-none">Discogs API</span>
+                  <span className={`text-[10px] font-bold mt-1 uppercase leading-none ${discogsConnected ? 'text-green-500' : 'text-red-500'}`}>{discogsConnected ? 'Online' : 'No Token'}</span>
+                </div>
+              </div>
+
             </div>
+
+            <button 
+              onClick={handleForceRefresh}
+              className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-brand hover:text-black text-zinc-500 py-4 rounded-2xl border border-white/5 transition-all active:scale-95 group"
+            >
+              <RefreshCw size={14} className="group-hover:animate-spin transition-colors" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Force App Refresh</span>
+            </button>
           </section>
+
         </div>
 
         <footer className="pt-8 opacity-20 text-[8px] font-black uppercase tracking-[0.3em] text-center text-zinc-500">
@@ -193,16 +207,16 @@ export const SettingsModal = ({
   );
 };
 
-// Komponent diody statusu
+// Pomocniczy komponent dla pulsującej diody
 const StatusDot = ({ active }: { active: boolean | null }) => (
-  <div className="relative flex h-2 w-2">
+  <div className="relative flex h-2.5 w-2.5 shrink-0">
     {active && (
       <motion.span 
-        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+        animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }}
         transition={{ repeat: Infinity, duration: 2 }}
         className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${active ? 'bg-green-500' : 'bg-red-500'}`}
       />
     )}
-    <span className={`relative inline-flex rounded-full h-2 w-2 ${active === null ? 'bg-zinc-700' : active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
+    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${active === null ? 'bg-zinc-700' : active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
   </div>
 );
