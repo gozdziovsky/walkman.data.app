@@ -147,7 +147,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
             else if (info.offset.x > 0 && onPrev) { setDirection(-1); onPrev(); }
           }
         }}
-        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative" 
+        className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row max-h-[95vh] shadow-2xl relative transform-gpu will-change-transform" 
         onClick={e => e.stopPropagation()}
       >
         
@@ -168,7 +168,7 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
           )}
 
           <motion.div 
-            className="absolute inset-0 z-10 bg-zinc-800"
+            className="absolute inset-0 z-10 bg-zinc-800 transform-gpu will-change-transform"
             drag={!isEdit && album.tracks ? "y" : false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0.2} // Zmniejszona elastyczność

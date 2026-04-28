@@ -216,10 +216,16 @@ function App() {
               <div 
                 key={album.id} 
                 onClick={() => setSelectedAlbum(album)} 
-                // ZMIANA: rounded-[1.8rem] -> rounded-xl (Mniejsze zaokrąglenia)
                 className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                style={{ contentVisibility: 'auto' }} // <-- DODAJ TO
               >
-                <img src={album.coverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
+                <img 
+                  src={album.coverUrl} 
+                  loading="lazy" 
+                  decoding="async" 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  alt={album.title} 
+                />
                 
                 {/* Ikonka Tracklisty */}
                 {album.tracks && (
@@ -234,7 +240,7 @@ function App() {
                     <p className="text-xs font-bold truncate uppercase tracking-tighter leading-none">{album.title}</p>
                   </div>
                 )}
-                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full z-10 ${album.status === 'MAM' ? 'bg-brand shadow-[0_0_10px_var(--brand-color)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
+                <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full z-10 ${album.status === 'MAM' ? 'bg-brand shadow-lg shadow-brand/50' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]'}`} />
               </div>
             ))}
           </div>
