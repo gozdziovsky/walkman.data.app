@@ -16,8 +16,8 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
   const [form, setForm] = useState({
     artist: '', title: '', coverUrl: '', genre: '',
     year: new Date().getFullYear(), format: 'FLAC', 
-    status: 'MAM' as 'MAM' | 'SZUKAM', 
-    rating: 0, spotify_url: '', youtube_url: '', tracks: ''
+    status: 'MAM' as 'MAM' | 'SZUKAM', rating: 0, 
+    spotify_url: '', youtube_url: '', tracks: ''
   });
 
   const search = async () => {
@@ -33,7 +33,7 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
           year: r.releaseDate ? new Date(r.releaseDate).getFullYear() : '', genre: r.primaryGenreName
         })));
       } else {
-        if (!discogsToken) { alert("Brak tokenu Discogs!"); return; }
+        if (!discogsToken) { alert("Wpisz token Discogs w ustawieniach!"); return; }
         const res = await fetch(`https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&per_page=15&token=${discogsToken}`);
         const data = await res.json();
         setResults(data.results.map((r: any) => {
@@ -73,39 +73,33 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
       }
       await supabase.from('albums').insert([{ ...form, coverUrl: finalUrl }]);
       onSuccess(); onClose();
-    } catch (err: any) { alert(err.message); } 
-    finally { setLoading(false); }
+    } catch (err: any) { alert(err.message); } finally { setLoading(false); }
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-xl flex items-center justify-center p-0 md:p-6" onClick={onClose}>
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-zinc-900 w-full max-w-3xl rounded-t-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 overflow-y-auto max-h-[95vh] border-t border-white/10 shadow-2xl no-scrollbar relative" onClick={e => e.stopPropagation()}>
-        <header className="flex justify-between items-center mb-10">
-          <h2 className="text-3xl font-black uppercase italic text-white tracking-tighter">Add <span className="text-brand">Digital</span></h2>
+        <header className="flex justify-between items-center mb-10 text-white">
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter">Add <span className="text-brand">Digital</span></h2>
           <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
         </header>
 
         <section className="mb-10 space-y-4">
-          <div className="flex justify-between items-end px-1">
-            <span className="text-[8px] font-black uppercase text-zinc-500 tracking-widest">Silnik wyszukiwania</span>
-            <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-              <button type="button" onClick={() => setLocalSource('itunes')} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${localSource === 'itunes' ? 'bg-white text-black shadow-lg' : 'text-zinc-600 hover:text-white'}`}>iTunes</button>
-              <button type="button" onClick={() => setLocalSource('discogs')} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${localSource === 'discogs' ? 'bg-brand text-black shadow-lg' : 'text-zinc-600 hover:text-white'}`}>Discogs</button>
-            </div>
+          <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 w-fit ml-auto mb-2">
+            <button type="button" onClick={() => setLocalSource('itunes')} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${localSource === 'itunes' ? 'bg-white text-black shadow-lg' : 'text-zinc-600 hover:text-white'}`}>iTunes</button>
+            <button type="button" onClick={() => setLocalSource('discogs')} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${localSource === 'discogs' ? 'bg-brand text-black shadow-lg' : 'text-zinc-600 hover:text-white'}`}>Discogs</button>
           </div>
-          <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all h-16 shadow-inner">
+          <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 h-16 shadow-inner">
             <div className="flex items-center justify-center pl-6 text-zinc-600"><Search size={20} /></div>
-            <input className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700" placeholder={`Szukaj w ${localSource.toUpperCase()}...`} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
-            <button onClick={search} className="px-8 bg-white hover:bg-brand text-black font-black uppercase text-[11px] tracking-widest transition-colors">
-              {searching ? <Loader2 size={18} className="animate-spin" /> : 'Szukaj'}
-            </button>
+            <input className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700" placeholder={`Szukaj albumu...`} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
+            <button onClick={search} className="px-8 bg-white hover:bg-brand text-black font-black uppercase text-[11px] tracking-widest transition-colors">{searching ? <Loader2 size={18} className="animate-spin" /> : 'Szukaj'}</button>
           </div>
           <AnimatePresence>
             {results.length > 0 && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden shadow-2xl max-h-60 overflow-y-auto no-scrollbar">
                 {results.map((r, i) => (
                   <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-brand/10 text-left border-b border-white/5 last:border-0 transition-colors group">
-                    <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover shadow-lg" alt="" />
+                    <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover" alt="" />
                     <div className="truncate">
                       <p className="text-xs font-black uppercase group-hover:text-brand transition-colors truncate">{r.title}</p>
                       <p className="text-[10px] text-zinc-500 uppercase font-bold truncate">{r.artist}</p>
@@ -133,13 +127,11 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
             <FormInput label="Format" value={form.format} onChange={v => setForm({...form, format: v})} />
             <FormInput label="Ocena" type="number" value={form.rating} onChange={v => setForm({...form, rating: parseInt(v)})} />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 text-left">
              <label className="text-[9px] font-black uppercase text-zinc-600 ml-1 flex items-center gap-2"><ListMusic size={12}/> Tracklista</label>
-             <textarea className="w-full bg-zinc-950 border border-white/5 rounded-2xl p-5 text-xs font-mono text-zinc-400 h-40 resize-none outline-none focus:border-brand/50 transition-all no-scrollbar" placeholder="Wklej listę utworów..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
+             <textarea className="w-full bg-zinc-950 border border-white/5 rounded-2xl p-5 text-xs font-mono text-zinc-400 h-40 resize-none outline-none focus:border-brand/50 no-scrollbar" placeholder="Lista utworów..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
           </div>
-          <button type="submit" disabled={loading} className="w-full py-6 bg-brand text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all shadow-2xl">
-            {loading ? 'Archwizowanie...' : 'Zapisz w Digital Archive'}
-          </button>
+          <button type="submit" disabled={loading} className="w-full py-6 bg-brand text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-white active:scale-95 transition-all shadow-2xl">Zapisz w Digital Archive</button>
         </form>
       </motion.div>
     </motion.div>
