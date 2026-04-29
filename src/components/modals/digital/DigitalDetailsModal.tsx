@@ -34,12 +34,13 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
     });
   }, [album.artist]);
 
+  // Znacznie mniejsze rozmiary dla mobile, potężne dla desktopu
   const getFontSize = (title: string) => {
     const len = title?.length || 0;
-    if (len < 12) return 'text-6xl md:text-8xl lg:text-9xl';
-    if (len < 25) return 'text-5xl md:text-7xl lg:text-8xl';
-    if (len < 45) return 'text-4xl md:text-5xl lg:text-6xl';
-    return 'text-3xl md:text-4xl lg:text-5xl';
+    if (len < 12) return 'text-4xl md:text-8xl lg:text-9xl';
+    if (len < 25) return 'text-3xl md:text-7xl lg:text-8xl';
+    if (len < 45) return 'text-2xl md:text-5xl lg:text-6xl';
+    return 'text-xl md:text-4xl lg:text-5xl';
   };
 
   const handleUpdate = async () => {
@@ -54,21 +55,19 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   const hasTracks = album.tracks && album.tracks.trim().length > 0;
 
   return (
-    // Tło Modala (identyczne jak w Settings, z blur-em)
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
       onClick={onClose}
       className="fixed inset-0 z-[400] bg-black/95 backdrop-blur-2xl flex items-end md:items-center justify-center p-0 md:p-6"
     >
-      {/* Kontener Modala (Drawer na mobile, wyśrodkowany panel na desktopie) */}
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         onClick={e => e.stopPropagation()}
-        className="bg-[#0e0e10] w-full max-w-5xl h-[92vh] md:h-[85vh] rounded-t-[2.5rem] md:rounded-[3.5rem] flex flex-col md:flex-row overflow-hidden relative transform-gpu will-change-transform shadow-[0_0_80px_rgba(0,0,0,0.8)] border border-white/5 md:border-b shadow-[0_0_80px_rgba(0,0,0,0.8)]"
+        className="bg-[#0e0e10] w-full max-w-5xl h-[92vh] md:h-[85vh] rounded-t-[2.5rem] md:rounded-[3.5rem] flex flex-col md:flex-row overflow-hidden relative transform-gpu will-change-transform shadow-[0_0_80px_rgba(0,0,0,0.8)] border border-white/5 md:border-b"
       >
         
-        {/* LEWITUJĄCA NAWIGACJA (Next/Prev/Close) */}
+        {/* LEWITUJĄCA NAWIGACJA */}
         <div className="absolute top-4 right-4 md:top-6 md:right-6 z-[100] flex items-center gap-2">
           {!isEdit && onPrev && (
             <button onClick={() => { setDirection(-1); onPrev(); }} className="p-3 md:p-4 bg-black/50 backdrop-blur-md rounded-full text-white/50 hover:text-white hover:bg-black/80 transition-all border border-white/5 active:scale-90">
@@ -85,7 +84,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
           </button>
         </div>
 
-        {/* ZAWARTOŚĆ Z ANIMACJĄ PRZEJŚCIA MIĘDZY ALBUMAMI */}
         <AnimatePresence mode="wait">
           <motion.div
             key={album.id + (isEdit ? '-edit' : '-view')}
@@ -96,7 +94,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
             className="flex flex-col md:flex-row w-full h-full"
           >
             
-            {/* LEFT: MEDIA SECTION (Tylko w trybie podglądu) */}
+            {/* LEFT: MEDIA SECTION */}
             {!isEdit && (
               <div className="w-full md:w-1/2 aspect-square md:aspect-auto md:h-full relative bg-zinc-950 shrink-0 group border-b md:border-b-0 md:border-r border-white/5 overflow-hidden">
                 <AnimatePresence mode="wait">
@@ -111,7 +109,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                   ) : (
                     <motion.div key="c" className="w-full h-full relative cursor-pointer" onClick={() => hasTracks && setShowTracks(true)}>
                       <img src={album.coverUrl} className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105" alt="" />
-                      {/* PRZYCISK EDYCJI: W Lewym Dolnym Rogu Okładki */}
                       <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-4 left-4 md:bottom-6 md:left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/50 hover:text-brand transition-all border border-white/10 active:scale-90 shadow-2xl z-50 hover:border-brand/30">
                         <Edit3 size={18} />
                       </button>
@@ -131,7 +128,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               
               {isEdit ? (
                 /* ========================================== */
-                /* EDIT MODE PANEL (Identyczny jak w Settings) */
+                /* EDIT MODE PANEL                            */
                 /* ========================================== */
                 <div className="flex flex-col w-full h-full">
                   <div className="flex-1 overflow-y-auto overscroll-contain p-6 md:p-12 lg:px-24 no-scrollbar space-y-12 md:space-y-16" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -190,28 +187,28 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               ) : (
 
                 /* ========================================== */
-                /* VIEW MODE PANEL (SZTYWNY SCHEMAT PRZYKLEJONY DO DOŁU) */
+                /* VIEW MODE PANEL (PANCERNY I KOMPAKTOWY)    */
                 /* ========================================== */
-                <div className="flex-1 flex flex-col justify-end gap-10 md:gap-14 no-scrollbar p-8 md:p-14 lg:p-20 text-left relative">
+                <div className="flex-1 flex flex-col justify-between no-scrollbar p-6 md:p-14 lg:p-20 text-left relative min-h-0">
                   
-                  {/* Tytuł i Artyści - Spychani do góry w razie potrzeby, ale trzymający strukturę */}
-                  <header className="shrink-0 pr-12 md:pr-0">
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mb-6">
+                  {/* Tytuł - Środkuje się w wolnej przestrzeni, obcięty do 3 linii na mobile, żeby nie zepsuć układu */}
+                  <header className="flex-1 flex flex-col justify-center pr-12 md:pr-0 min-h-0">
+                    <div className="flex flex-wrap gap-x-2 gap-y-1 mb-2">
                       {artists.map((name, i) => (
-                        <button key={i} onClick={() => onArtistClick(name)} className="text-brand font-black uppercase text-[11px] md:text-[12px] tracking-tighter italic hover:text-white transition-colors flex items-center shrink-0">
-                          {name}{i < artists.length - 1 && <span className="text-zinc-700 ml-3 not-italic">/</span>}
+                        <button key={i} onClick={() => onArtistClick(name)} className="text-brand font-black uppercase text-[10px] md:text-[12px] tracking-tighter italic hover:text-white transition-colors flex items-center shrink-0">
+                          {name}{i < artists.length - 1 && <span className="text-zinc-700 ml-2 md:ml-3 not-italic">/</span>}
                         </button>
                       ))}
                     </div>
-                    <div className="py-2">
-                      <h2 className={`${getFontSize(album.title)} font-black uppercase italic tracking-tighter leading-[0.95] text-white transition-all duration-300 break-words`}>
+                    <div className="py-1 min-h-0">
+                      <h2 className={`${getFontSize(album.title)} font-black uppercase italic tracking-tighter leading-[0.85] text-white break-words line-clamp-3 md:line-clamp-none transition-all duration-300`}>
                         {album.title}
                       </h2>
                     </div>
                   </header>
 
-                  {/* Sztywny Dół - Budowany OD SPODU do góry */}
-                  <div className="flex flex-col gap-6 md:gap-8 border-t border-white/5 pt-6 shrink-0">
+                  {/* Sztywny Dół - Ekstremalnie skompresowany, zawsze widoczny na mobile */}
+                  <div className="shrink-0 flex flex-col gap-3 md:gap-6 border-t border-white/5 pt-4 md:pt-6">
                     
                     {/* Poziom 3: Rok wydania i Gatunek */}
                     <div className="flex flex-wrap gap-2">
@@ -231,17 +228,18 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                     </div>
                     
                     {/* Poziom 1 (NA SAMYM DOLE): Linki Spotify i YouTube */}
-                    <div className="grid grid-cols-2 gap-3 pb-4 md:pb-0">
+                    <div className="grid grid-cols-2 gap-2 md:gap-3 pb-2 md:pb-0">
                       <ActionButton 
-                        icon={<Play size={16} fill="black"/>} text="Spotify" primary 
+                        icon={<Play size={14} mdSize={16} fill="black"/>} text="Spotify" primary 
                         onClick={() => { window.location.href = `spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`; }} 
                       />
                       <ActionButton 
-                        icon={<MonitorPlay size={16}/>} text="YouTube" 
+                        icon={<MonitorPlay size={14} mdSize={16}/>} text="YouTube" 
                         onClick={() => { window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`, '_blank', 'noopener,noreferrer'); }} 
                       />
                     </div>
                   </div>
+
                 </div>
               )}
             </div>
@@ -252,9 +250,9 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   );
 };
 
-// MINI COMPONENTS (Zachowane bez zmian)
+// Zmniejszone padingi i fonty na telefonie dla maksymalnej pojemności
 const Badge = ({ icon, text, brand, colorClass }: any) => (
-  <span className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all shrink-0
+  <span className={`px-3 py-1.5 md:px-4 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-2 shadow-lg transition-all shrink-0
     ${colorClass ? colorClass : (brand ? 'bg-brand text-black shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5 shadow-black/20')}
   `}>
     {icon} {text}
@@ -262,7 +260,7 @@ const Badge = ({ icon, text, brand, colorClass }: any) => (
 );
 
 const ActionButton = ({ icon, text, primary, onClick }: any) => (
-  <button onClick={onClick} className={`py-4 md:py-5 rounded-[1.5rem] font-black uppercase text-[10px] md:text-[11px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl ${primary ? 'bg-white text-black hover:bg-brand' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>
+  <button onClick={onClick} className={`py-3 md:py-5 rounded-xl md:rounded-[1.5rem] font-black uppercase text-[9px] md:text-[11px] tracking-[0.1em] flex items-center justify-center gap-1.5 md:gap-2 active:scale-95 transition-all shadow-xl ${primary ? 'bg-white text-black hover:bg-brand' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>
     {icon} {text}
   </button>
 );
@@ -270,6 +268,6 @@ const ActionButton = ({ icon, text, primary, onClick }: any) => (
 const FormInput = ({ label, value, onChange, type = "text" }: any) => (
   <div className="space-y-1 text-left flex-1">
     <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">{label}</label>
-    <input type={type} className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-5 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all shadow-inner" value={value} onChange={e => onChange(e.target.value)} />
+    <input type={type} className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 md:py-5 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all shadow-inner" value={value} onChange={e => onChange(e.target.value)} />
   </div>
 );
