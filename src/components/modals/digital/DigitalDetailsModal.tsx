@@ -91,7 +91,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
       </div>
 
       {/* RIGHT: DATA SECTION */}
-      <div className="p-8 md:p-14 lg:p-20 flex-1 flex flex-col justify-between bg-gradient-to-br from-[#0e0e10] to-black min-h-0 overflow-hidden">
+      <div className="p-8 md:p-14 lg:px-20 lg:pt-20 lg:pb-12 flex-1 flex flex-col justify-between bg-gradient-to-br from-[#0e0e10] to-black min-h-0 overflow-hidden">
         <AnimatePresence mode="wait">
           {isEdit ? (
             <motion.div key="edit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6 my-auto text-left w-full max-w-md mx-auto">
@@ -128,7 +128,8 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                 </div>
               </header>
 
-              <div className="space-y-10">
+              {/* SECTION: DATA & ACTIONS (Anchored to bottom) */}
+              <div className="space-y-8">
                 <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
                   <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
                   <Badge icon={<Disc size={12}/>} text={album.format} brand />
@@ -144,7 +145,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                   <ActionButton icon={<Play size={16} fill="black"/>} text="Spotify" primary onClick={() => window.open(`spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
                   <ActionButton icon={<MonitorPlay size={16}/>} text="YouTube" onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
                 </div>
-                <footer className="pt-4 opacity-10 text-[8px] font-black uppercase tracking-[0.4em]">GS ARCHIVE // SYSTEM V3</footer>
               </div>
             </motion.div>
           )}
@@ -154,7 +154,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   );
 };
 
-// MINI COMPONENTS
+// MINI COMPONENTS (remain the same)
 const Badge = ({ icon, text, brand, colorClass }: any) => (
   <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all
     ${colorClass ? colorClass : (brand ? 'bg-brand text-black shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5 shadow-black/20')}
