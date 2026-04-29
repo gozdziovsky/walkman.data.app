@@ -198,7 +198,8 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
         {showFilters && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowFilters(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[210]" />
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[220] shadow-2xl text-left">
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[220] shadow-2xl text-left transform-gpu will-change-transform">
               <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-10" />
               
               <section className="mb-10 max-w-lg mx-auto">

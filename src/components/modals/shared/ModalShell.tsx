@@ -49,9 +49,10 @@ export const ModalShell = ({
         variants={panelVariants}
         initial="enter" animate="center" exit="exit"
         transition={{ 
-          x: { type: "spring", stiffness: 200, damping: 28 },
-          opacity: { duration: 0.3 }
-        }}
+            x: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+            y: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+            opacity: { duration: 0.3 }
+          }}
         drag={!isEdit ? true : false}
         dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={0}
@@ -66,7 +67,7 @@ export const ModalShell = ({
             else if (offset.y > threshold || velocity.y > 500) onClose();
           }
         }}
-        className="bg-[#0e0e10] w-full max-w-7xl h-[92vh] rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/5 border-b-0"
+        className="bg-[#0e0e10] w-full max-w-7xl h-[92vh] ... border-white/5 border-b-0 transform-gpu will-change-transform"
         onClick={e => e.stopPropagation()}
       >
         {children}
