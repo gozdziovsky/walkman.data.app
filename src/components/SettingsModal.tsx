@@ -15,7 +15,7 @@ export const SettingsModal = ({ onClose, cols, setCols }: any) => {
   const [dgStatus, setDgStatus] = useState<'loading' | 'ok' | 'err'>('loading');
 
   // Akordeony (Zakładki)
-  const [isGlobalOpen, setIsGlobalOpen] = useState(true);
+  const [isGlobalOpen, setIsGlobalOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
   useEffect(() => {
