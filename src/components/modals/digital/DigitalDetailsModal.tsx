@@ -90,8 +90,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
       )}
 
       {/* RIGHT: DATA & EDIT SECTION */}
-      {/* KLUCZOWE: relative w-full h-full min-h-0 pozwala kontrolować dzieci absolutnie */}
-      <div className="flex-1 relative w-full h-full min-h-0 bg-gradient-to-br from-[#0e0e10] to-black overflow-hidden">
+      <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-gradient-to-br from-[#0e0e10] to-black overflow-hidden">
         <AnimatePresence mode="wait">
           
           {/* ========================================== */}
@@ -102,13 +101,12 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               key="edit" 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} 
-              // KLUCZOWE: absolute inset-0 blokuje flex-blowout. Kontener jest sztywny jak rama.
-              className="absolute inset-0 flex flex-col bg-[#0e0e10] z-20"
+              className="flex flex-col w-full h-full bg-[#0e0e10] z-20"
             >
               {/* Środek formularza - odblokowany scroll z wymuszeniem dla mobile */}
               <div 
                 className="flex-1 overflow-y-auto overscroll-contain p-6 md:p-12 lg:px-24 no-scrollbar space-y-12 md:space-y-16"
-                style={{ WebkitOverflowScrolling: 'touch' }} // Zapobiega zacinaniu na iOS
+                style={{ WebkitOverflowScrolling: 'touch' }} 
               >
                 <header className="flex items-center justify-between pb-6 border-b border-white/5 pt-2">
                   <h3 className="text-xl md:text-2xl font-black uppercase tracking-widest text-brand flex items-center gap-3"><Edit3 size={24}/> Edit Archive Data</h3>
@@ -168,52 +166,51 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
           /* ========================================== */
           /* VIEW MODE PANEL (STATYCZNY PODGLĄD)        */
           /* ========================================== */
-            <motion.div 
-              key="view" 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
-              // KLUCZOWE: absolute inset-0 sprawia, że podgląd też grzecznie siedzi w swoim miejscu i nie ma prawa scrollować
-              className="absolute inset-0 p-8 md:p-14 lg:px-20 lg:pt-20 lg:pb-12 flex flex-col justify-between text-left z-10"
-            >
-              <header className="pt-2">
-                <div className="flex flex-wrap gap-x-3 gap-y-1 mb-6">
-                  {artists.map((name, i) => (
-                    <button key={i} onClick={() => onArtistClick(name)} className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors flex items-center">
-                      {name}{i < artists.length - 1 && <span className="text-zinc-700 ml-3 not-italic">/</span>}
-                    </button>
-                  ))}
-                </div>
-                <div className="py-2">
-                  <h2 className={`${getFontSize(album.title)} font-black uppercase italic tracking-tighter leading-[0.95] text-white line-clamp-4 transition-all duration-300`}>
-                    {album.title}
-                  </h2>
-                </div>
-              </header>
-
-              <div className="space-y-8 mt-auto pt-10">
-                <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
-                  <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
-                  {album.genre && <Badge icon={<Disc size={12}/>} text={album.genre} />}
-                  <Badge icon={<Search size={12}/>} text={album.format} brand />
-                  <Badge 
-                    icon={album.status === 'MAM' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
-                    text={album.status === 'MAM' ? 'OWNED' : 'WANTED'} 
-                    colorClass={album.status === 'MAM' ? 'bg-brand text-black shadow-brand/20' : 'bg-orange-500 text-black shadow-orange-500/20'}
-                  />
-                  {Number(album.rating) > 0 && <Badge icon={<Star size={12} fill="currentColor"/>} text={`${album.rating}/10`} brand />}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <ActionButton 
-                    icon={<Play size={16} fill="black"/>} text="Spotify" primary 
-                    onClick={() => { window.location.href = `spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`; }} 
-                  />
-                  <ActionButton 
-                    icon={<MonitorPlay size={16}/>} text="YouTube" 
-                    onClick={() => { window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`, '_blank', 'noopener,noreferrer'); }} 
-                  />
-                </div>
+          <motion.div 
+            key="view" 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+            className="w-full h-full flex flex-col justify-between md:justify-center p-8 md:p-16 lg:p-20 text-left z-10"
+          >
+            <header className="pt-2 md:pt-0 shrink-0">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mb-6">
+                {artists.map((name, i) => (
+                  <button key={i} onClick={() => onArtistClick(name)} className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors flex items-center">
+                    {name}{i < artists.length - 1 && <span className="text-zinc-700 ml-3 not-italic">/</span>}
+                  </button>
+                ))}
               </div>
-            </motion.div>
+              <div className="py-2">
+                <h2 className={`${getFontSize(album.title)} font-black uppercase italic tracking-tighter leading-[0.95] text-white line-clamp-4 md:line-clamp-none transition-all duration-300`}>
+                  {album.title}
+                </h2>
+              </div>
+            </header>
+
+            <div className="space-y-8 mt-auto md:mt-12 pt-10 md:pt-0 shrink-0">
+              <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
+                <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
+                {album.genre && <Badge icon={<Disc size={12}/>} text={album.genre} />}
+                <Badge icon={<Search size={12}/>} text={album.format} brand />
+                <Badge 
+                  icon={album.status === 'MAM' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
+                  text={album.status === 'MAM' ? 'OWNED' : 'WANTED'} 
+                  colorClass={album.status === 'MAM' ? 'bg-brand text-black shadow-brand/20' : 'bg-orange-500 text-black shadow-orange-500/20'}
+                />
+                {Number(album.rating) > 0 && <Badge icon={<Star size={12} fill="currentColor"/>} text={`${album.rating}/10`} brand />}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <ActionButton 
+                  icon={<Play size={16} fill="black"/>} text="Spotify" primary 
+                  onClick={() => { window.location.href = `spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`; }} 
+                />
+                <ActionButton 
+                  icon={<MonitorPlay size={16}/>} text="YouTube" 
+                  onClick={() => { window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`, '_blank', 'noopener,noreferrer'); }} 
+                />
+              </div>
+            </div>
+          </motion.div>
           )}
         </AnimatePresence>
       </div>
