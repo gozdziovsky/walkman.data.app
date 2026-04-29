@@ -105,10 +105,18 @@ export const ArchiveEngine = ({
 
   return (
     <div className="min-h-screen bg-[#09090b] text-white pb-32 selection-brand">
-      <header className="px-6 pt-safe mt-6 space-y-6 max-w-[1800px] mx-auto w-full">
+      <style>{`
+        :root { --brand-color: ${themeColor}; }
+        .text-brand { color: var(--brand-color) !important; }
+        .bg-brand { background-color: var(--brand-color) !important; }
+        .border-brand { border-color: var(--brand-color) !important; }
+      `}</style>
+
+      {/* Header - obniżony o mt-12, aby logo nie kolidowało z nav */}
+      <header className="px-6 pt-safe mt-12 space-y-8 max-w-[1800px] mx-auto w-full">
         <div className="flex flex-col items-center justify-center pt-2 pb-4"> 
           <img src={logo} alt="Logo" className="w-full max-w-[320px] md:max-w-[480px] h-auto object-contain select-none" />
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand mt-2 italic">{archiveTitle}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand mt-4 italic opacity-50">{archiveTitle}</p>
         </div>
 
         <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-4 shadow-2xl">
@@ -131,21 +139,31 @@ export const ArchiveEngine = ({
         <div className="relative">
           <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-600" size={14} />
           <input 
-            type="text" placeholder={`Szukaj w ${archiveTitle}...`}
+            type="text" placeholder={`Szukaj...`}
             className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none transition-all placeholder:text-zinc-700 focus:bg-zinc-900/60 focus:border-brand/30" 
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} 
           />
         </div>
       </header>
 
-      <main className="px-6 mt-4 max-w-[1800px] mx-auto w-full">
-        {processedAlbums.length === 0 ? (
-          <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.4em] italic">No records found</p></div>
-        ) : (
-          <div className={`grid grid-cols-${cols} md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 transition-all duration-500`}>
+      {/* Main Grid z płynnym przejściem archiwów */}
+      <main className="px-6 mt-8 max-w-[1800px] mx-auto w-full overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tableName} // Kluczowe: cała siatka animuje się przy zmianie tabeli
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4, ease: "circOut" }}
+            className={`grid grid-cols-${cols} md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4`}
+          >
             {processedAlbums.slice(0, visibleCount).map((album, idx) => (
               <motion.div 
-                key={album.id} layoutId={album.id}
+                key={album.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: Math.min(idx * 0.02, 0.4) }} // Efekt stagger
                 ref={idx === visibleCount - 1 ? lastAlbumRef : null}
                 onClick={() => setSelectedAlbum(album)} 
                 className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer shadow-xl active:scale-95 transition-transform"
@@ -163,8 +181,9 @@ export const ArchiveEngine = ({
                 </div>
               </motion.div>
             ))}
-          </div>
-        )}
+          </motion.div>
+        </AnimatePresence>
+        
         {visibleCount < processedAlbums.length && (
           <div className="w-full h-24 flex items-center justify-center"><Loader2 className="animate-spin text-zinc-600" size={24} /></div>
         )}
@@ -174,6 +193,7 @@ export const ArchiveEngine = ({
         <Plus size={36} strokeWidth={3} />
       </button>
 
+      {/* Drawer Filtry */}
       <AnimatePresence>
         {showFilters && (
           <>
@@ -231,6 +251,7 @@ export const ArchiveEngine = ({
   );
 };
 
+// Komponenty pomocnicze bez zmian (zgodnie z obietnicą, by nic nie wyciąć)
 const StatBox = ({ label, val, colorClass, active, onClick }: any) => (
   <button onClick={onClick} className={`flex flex-col px-3 py-2 rounded-xl border transition-all ${active ? 'bg-zinc-800 border-white/10 shadow-lg' : 'border-transparent opacity-60'}`}>
     <span className="text-[7px] font-black text-zinc-500 uppercase tracking-widest mb-1 leading-none">{label}</span>
