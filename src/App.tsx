@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import DigitalArchive from './pages/DigitalArchive';
 import VinylArchive from './pages/VinylArchive';
 import CDArchive from './pages/CDArchive';
@@ -6,7 +6,7 @@ import CDArchive from './pages/CDArchive';
 export default function App() {
   return (
     <BrowserRouter>
-      {/* Pasek nawigacji - precyzyjne centrowanie */}
+      {/* Navigation Bar */}
       <nav className="w-full bg-[#09090b] py-4 flex items-center justify-center border-b border-white/5 z-[200]">
         <div className="flex gap-2 px-4 w-full max-w-md justify-center">
           <ArchiveLink to="/digital" label="Digital" />
@@ -16,10 +16,12 @@ export default function App() {
       </nav>
 
       <Routes>
+        {/* Redirect from root to digital to ensure the link is highlighted */}
+        <Route path="/" element={<Navigate to="/digital" replace />} />
+        
         <Route path="/digital" element={<DigitalArchive />} />
         <Route path="/vinyl" element={<VinylArchive />} />
         <Route path="/cd" element={<CDArchive />} />
-        <Route path="/" element={<DigitalArchive />} />
       </Routes>
     </BrowserRouter>
   );
@@ -36,7 +38,6 @@ const ArchiveLink = ({ to, label }: { to: string, label: string }) => (
         : 'text-zinc-600 border-transparent hover:text-zinc-400'}
     `}
   >
-    {/* Label bez jednostronnego paddingu dla idealnego środka */}
     {label}
   </NavLink>
 );
