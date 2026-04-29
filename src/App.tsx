@@ -145,14 +145,14 @@ function App() {
       `}</style>
 
       {/* ZMIANA: Dodano max-w-[1800px] i mx-auto w-full, żeby kontrolować szerokość na dużych monitorach */}
-      <header className="px-6 pt-12 space-y-6 max-w-[1800px] mx-auto w-full">
-      <div className="flex flex-col items-center justify-center pt-10 pb-6"> 
-      <img 
-    src={grooveShelfLogo} 
-    alt="GrooveShelf Logo"
-    className="w-full max-w-[320px] md:max-w-[480px] h-auto object-contain select-none"
-  />
-</div>
+      <header className="px-6 pt-safe mt-4 md:mt-6 space-y-6 max-w-[1800px] mx-auto w-full">
+        <div className="flex flex-col items-center justify-center pt-2 pb-4"> 
+          <img 
+            src={grooveShelfLogo} 
+            alt="GrooveShelf Logo"
+            className="w-full max-w-[320px] md:max-w-[480px] h-auto object-contain select-none"
+          />
+        </div>
 
         <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-4 shadow-2xl">
           <div className="flex gap-1 text-left overflow-x-auto no-scrollbar items-center">
