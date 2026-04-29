@@ -45,8 +45,6 @@ export const SettingsModal = ({ onClose, cols, setCols }: any) => {
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 35, stiffness: 400 }}
         onClick={e => e.stopPropagation()}
-        // Desktop: h-auto z max-h-[85vh] pozwala oknu dopasować się do zawartości (nie zgniata jej)
-        // Mobile: h-[92vh] trzyma okno na dole jak systemowy panel
         className="bg-[#0e0e10] w-full max-w-2xl h-[92vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-[3.5rem] flex flex-col border border-white/10 border-b-0 md:border-b shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden relative"
       >
         {/* HEADER */}
@@ -68,9 +66,7 @@ export const SettingsModal = ({ onClose, cols, setCols }: any) => {
         {/* CONTENT (SCROLLABLE) */}
         <div className="flex-1 overflow-y-auto px-6 md:px-12 py-8 no-scrollbar space-y-4">
           
-          {/* ==================================================== */}
-          {/* ACCORDION 1: GLOBAL SETTINGS                         */}
-          {/* ==================================================== */}
+          {/* ACCORDION 1: GLOBAL SETTINGS */}
           <div className="bg-zinc-900/30 border border-white/5 rounded-[2rem] overflow-hidden">
             <button 
               onClick={() => setIsGlobalOpen(!isGlobalOpen)}
@@ -94,7 +90,6 @@ export const SettingsModal = ({ onClose, cols, setCols }: any) => {
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  {/* Wnętrze akordeonu: zbalansowane odstępy (space-y-10) */}
                   <div className="p-6 md:p-8 pt-2 space-y-10">
                     
                     <section className="space-y-4">
@@ -137,7 +132,8 @@ export const SettingsModal = ({ onClose, cols, setCols }: any) => {
                         <label className="text-[10px] font-black uppercase tracking-[0.2em]">Global Grid Density</label>
                       </div>
                       <div className="flex gap-2">
-                        {[2, 3, 4, 5, 6].map(n => (
+                        {/* ZMIENIONE NA 1-4 ZGODNIE Z PROŚBĄ */}
+                        {[1, 2, 3, 4].map(n => (
                           <button 
                             key={n} onClick={() => { setCols(n); saveSetting('walkman_cols', n); }}
                             className={`flex-1 py-4 rounded-xl font-mono text-base md:text-lg font-black border transition-all
@@ -175,9 +171,7 @@ export const SettingsModal = ({ onClose, cols, setCols }: any) => {
             </AnimatePresence>
           </div>
 
-          {/* ==================================================== */}
-          {/* ACCORDION 2: ARCHIVE SPECIFIC (PLACEHOLDER)          */}
-          {/* ==================================================== */}
+          {/* ACCORDION 2: ARCHIVE SPECIFIC (PLACEHOLDER) */}
           <div className="bg-zinc-900/10 border border-white/5 rounded-[2rem] overflow-hidden opacity-50">
             <button 
               className="w-full flex items-center justify-between p-6 md:p-8 cursor-not-allowed"
@@ -213,7 +207,6 @@ export const SettingsModal = ({ onClose, cols, setCols }: any) => {
   );
 };
 
-// ... reszta mini-komponentów jak StatusLamp pozostaje bez zmian
 const StatusLamp = ({ label, status, icon }: any) => (
   <div className="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full border border-white/5">
     {icon}
