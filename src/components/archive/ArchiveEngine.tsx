@@ -112,9 +112,29 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
           </div>
         </div>
 
+        {/* Search Bar z przyciskiem (X) */}
         <div className="relative">
           <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-600" size={14} />
-          <input type="text" placeholder="Search collection..." className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none focus:bg-zinc-900/60 focus:border-brand/30 transition-all" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <input 
+            type="text" 
+            placeholder="Search collection..." 
+            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none focus:bg-zinc-900/60 focus:border-brand/30 transition-all" 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+          />
+          <AnimatePresence>
+            {searchTerm && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                onClick={() => setSearchTerm('')}
+                className="absolute right-5 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-brand transition-colors"
+              >
+                <X size={16} strokeWidth={3} />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
