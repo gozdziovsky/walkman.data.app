@@ -90,22 +90,26 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
       )}
 
       {/* RIGHT: DATA & EDIT SECTION */}
-      <div className="flex-1 flex flex-col bg-gradient-to-br from-[#0e0e10] to-black min-h-0 overflow-hidden relative">
+      {/* KLUCZOWE: relative w-full h-full min-h-0 pozwala kontrolować dzieci absolutnie */}
+      <div className="flex-1 relative w-full h-full min-h-0 bg-gradient-to-br from-[#0e0e10] to-black overflow-hidden">
         <AnimatePresence mode="wait">
           
           {/* ========================================== */}
-          {/* EDIT MODE PANEL (PEŁEN EKRAN, PRZEWIJANY)  */}
+          {/* EDIT MODE PANEL (SCROLLABLE, PEŁEN EKRAN)  */}
           {/* ========================================== */}
           {isEdit ? (
             <motion.div 
               key="edit" 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} 
-              className="flex flex-col w-full h-full"
+              // KLUCZOWE: absolute inset-0 blokuje flex-blowout. Kontener jest sztywny jak rama.
+              className="absolute inset-0 flex flex-col bg-[#0e0e10] z-20"
             >
-              {/* Środek formularza - Scrollowalny */}
-              <div className="flex-1 overflow-y-auto p-6 md:p-12 lg:px-24 no-scrollbar space-y-12 md:space-y-16">
-                
+              {/* Środek formularza - odblokowany scroll z wymuszeniem dla mobile */}
+              <div 
+                className="flex-1 overflow-y-auto overscroll-contain p-6 md:p-12 lg:px-24 no-scrollbar space-y-12 md:space-y-16"
+                style={{ WebkitOverflowScrolling: 'touch' }} // Zapobiega zacinaniu na iOS
+              >
                 <header className="flex items-center justify-between pb-6 border-b border-white/5 pt-2">
                   <h3 className="text-xl md:text-2xl font-black uppercase tracking-widest text-brand flex items-center gap-3"><Edit3 size={24}/> Edit Archive Data</h3>
                 </header>
@@ -147,7 +151,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               </div>
 
               {/* Stopka formularza - Zawsze widoczna na dole ekranu */}
-              <div className="shrink-0 p-6 md:p-12 pt-6 bg-[#0e0e10] border-t border-white/5">
+              <div className="shrink-0 p-6 md:p-12 pt-6 bg-[#0e0e10] border-t border-white/5 z-30 relative">
                 <button onClick={handleUpdate} disabled={loading} className="w-full py-6 bg-brand text-black rounded-[2rem] font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-[0_0_20px_rgba(var(--brand-rgb),0.15)] flex items-center justify-center gap-2">
                   {loading ? <span className="animate-pulse">Saving Changes...</span> : 'Commit Changes'}
                 </button>
@@ -164,7 +168,12 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
           /* ========================================== */
           /* VIEW MODE PANEL (STATYCZNY PODGLĄD)        */
           /* ========================================== */
-            <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-8 md:p-14 lg:px-20 lg:pt-20 lg:pb-12 h-full flex flex-col justify-between text-left">
+            <motion.div 
+              key="view" 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+              // KLUCZOWE: absolute inset-0 sprawia, że podgląd też grzecznie siedzi w swoim miejscu i nie ma prawa scrollować
+              className="absolute inset-0 p-8 md:p-14 lg:px-20 lg:pt-20 lg:pb-12 flex flex-col justify-between text-left z-10"
+            >
               <header className="pt-2">
                 <div className="flex flex-wrap gap-x-3 gap-y-1 mb-6">
                   {artists.map((name, i) => (
