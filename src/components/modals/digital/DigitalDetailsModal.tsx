@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Play, MonitorPlay, Trash2, Edit3, Loader2, Calendar, 
@@ -21,13 +21,33 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
     setDirection(0);
   }, [album]);
 
-  // --- LOGIKA DYNAMICZNEJ CZCIONKI ---
+  // --- SMART ARTIST SPLITTER ---
+  const artists = useMemo(() => {
+    const raw = album.artist || "";
+    const exceptions = ["Tyler, The Creator", "Earth, Wind & Fire", "Crosby, Stills, Nash & Young"];
+    
+    let temp = raw;
+    exceptions.forEach((ex, i) => {
+      temp = temp.split(ex).join(`##EX${i}##`);
+    });
+
+    const parts = temp.split(',').map((p: string) => p.trim()).filter(Boolean);
+    
+    return parts.map((p: string) => {
+      let restored = p;
+      exceptions.forEach((ex, i) => {
+        restored = restored.split(`##EX${i}##`).join(ex);
+      });
+      return restored;
+    });
+  }, [album.artist]);
+
   const getFontSize = (title: string) => {
     const len = title.length;
-    if (len < 12) return 'text-6xl md:text-8xl lg:text-9xl'; // Bardzo krótkie
-    if (len < 25) return 'text-5xl md:text-7xl lg:text-8xl'; // Standardowe
-    if (len < 45) return 'text-4xl md:text-5xl lg:text-6xl'; // Dłuższe
-    return 'text-3xl md:text-4xl lg:text-5xl'; // Ekstremalnie długie
+    if (len < 12) return 'text-6xl md:text-8xl lg:text-9xl';
+    if (len < 25) return 'text-5xl md:text-7xl lg:text-8xl';
+    if (len < 45) return 'text-4xl md:text-5xl lg:text-6xl';
+    return 'text-3xl md:text-4xl lg:text-5xl';
   };
 
   const handleUpdate = async () => {
@@ -104,7 +124,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
         className="bg-[#0e0e10] w-full max-w-7xl h-[92vh] rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/5 border-b-0"
         onClick={e => e.stopPropagation()}
       >
-        {/* LEFT: VISUALS */}
+        {/* LEFT: MEDIA */}
         <div className="w-full md:w-1/2 aspect-square md:aspect-auto md:h-full relative bg-zinc-950 shrink-0 group border-r border-white/5">
           <AnimatePresence mode="wait">
             {showTracks ? (
@@ -148,7 +168,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                     </div>
                  </div>
                  <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
-                    <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs active:scale-95 transition-all shadow-lg shadow-brand/10 text-center">Save Changes</button>
+                    <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs active:scale-95 transition-all shadow-lg shadow-brand/10">Save Changes</button>
                     <div className="flex gap-3">
                       <button onClick={() => setIsEdit(false)} className="flex-1 py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase text-[10px] opacity-50">Cancel</button>
                       <button onClick={handleDelete} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95 flex items-center justify-center"><Trash2 size={18}/></button>
@@ -157,14 +177,28 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               </motion.div>
             ) : (
               <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col justify-between text-left">
-                <header>
-                  <button onClick={() => onArtistClick(album.artist)} className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors mb-4">{album.artist}</button>
-                  {/* TUTAJ DZIAŁA DYNAMICZNA CZCIONKA */}
-                  <h2 className={`${getFontSize(album.title)} font-black uppercase italic tracking-tighter leading-[0.85] text-white line-clamp-4 transition-all duration-300`}>
-                    {album.title}
-                  </h2>
+                {/* 1. Header Area - Artist moved higher */}
+                <header className="pt-2">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mb-6">
+                    {artists.map((name, i) => (
+                      <button 
+                        key={i}
+                        onClick={() => onArtistClick(name)} 
+                        className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors flex items-center"
+                      >
+                        {name}{i < artists.length - 1 && <span className="text-zinc-700 ml-3 not-italic">/</span>}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Title with py-2 and leading-0.95 to prevent clipping */}
+                  <div className="py-2">
+                    <h2 className={`${getFontSize(album.title)} font-black uppercase italic tracking-tighter leading-[0.95] text-white line-clamp-4 transition-all duration-300`}>
+                      {album.title}
+                    </h2>
+                  </div>
                 </header>
 
+                {/* 2. Bottom Data Area */}
                 <div className="space-y-10">
                   <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
                     <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
@@ -195,7 +229,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   );
 };
 
-// MINI COMPONENTS
+// ... (Mini components remain the same)
 const Badge = ({ icon, text, brand, colorClass }: any) => (
   <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all
     ${colorClass ? colorClass : (brand ? 'bg-brand text-black shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5 shadow-black/20')}
@@ -203,13 +237,11 @@ const Badge = ({ icon, text, brand, colorClass }: any) => (
     {icon} {text}
   </span>
 );
-
 const ActionButton = ({ icon, text, primary, onClick }: any) => (
   <button onClick={onClick} className={`py-4 rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl ${primary ? 'bg-white text-black hover:bg-brand' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>
     {icon} {text}
   </button>
 );
-
 const FormInput = ({ label, value, onChange, type = "text" }: any) => (
   <div className="space-y-1 text-left">
     <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">{label}</label>
