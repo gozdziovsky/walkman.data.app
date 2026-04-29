@@ -34,7 +34,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
     });
   }, [album.artist]);
 
-  // Znacznie mniejsze rozmiary dla mobile, potężne dla desktopu
   const getFontSize = (title: string) => {
     const len = title?.length || 0;
     if (len < 12) return 'text-4xl md:text-8xl lg:text-9xl';
@@ -87,10 +86,20 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
         <AnimatePresence mode="wait">
           <motion.div
             key={album.id + (isEdit ? '-edit' : '-view')}
-            initial={{ opacity: 0, x: direction * 40 }}
+            initial={{ opacity: 0, x: direction * 50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -40 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, x: direction * -50 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            
+            // --- GŁÓWNY SWIPE (LEWO/PRAWO) ---
+            drag={!isEdit ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, { offset }) => {
+              if (offset.x < -60 && onNext) { setDirection(1); onNext(); }
+              else if (offset.x > 60 && onPrev) { setDirection(-1); onPrev(); }
+            }}
+            
             className="flex flex-col md:flex-row w-full h-full"
           >
             
@@ -99,7 +108,17 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               <div className="w-full md:w-1/2 aspect-square md:aspect-auto md:h-full relative bg-zinc-950 shrink-0 group border-b md:border-b-0 md:border-r border-white/5 overflow-hidden">
                 <AnimatePresence mode="wait">
                   {showTracks ? (
-                    <motion.div key="t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="absolute inset-0 p-8 overflow-y-auto bg-black/95 z-20 no-scrollbar text-left pb-32">
+                    <motion.div 
+                      key="t" 
+                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} 
+                      transition={{ duration: 0.3 }} 
+                      
+                      // --- SWIPE DOWN ŻEBY ZAMKNĄĆ TRACKLISTĘ ---
+                      drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
+                      onDragEnd={(e, { offset }) => { if (offset.y > 40) setShowTracks(false); }}
+                      
+                      className="absolute inset-0 p-8 overflow-y-auto bg-black/95 z-20 no-scrollbar text-left pb-32"
+                    >
                       <div className="flex items-center justify-between mb-8 sticky top-0 bg-black/10 py-2 backdrop-blur-sm">
                         <h4 className="text-brand text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2"><ListMusic size={14}/> Tracks</h4>
                         <button onClick={() => setShowTracks(false)} className="p-2 bg-white/5 rounded-full hover:bg-brand hover:text-black transition-colors"><ChevronDown size={16}/></button>
@@ -107,7 +126,15 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                       <pre className="text-zinc-500 font-mono text-[11px] md:text-[13px] whitespace-pre-wrap leading-relaxed">{album.tracks}</pre>
                     </motion.div>
                   ) : (
-                    <motion.div key="c" className="w-full h-full relative cursor-pointer" onClick={() => hasTracks && setShowTracks(true)}>
+                    <motion.div 
+                      key="c" 
+                      className="w-full h-full relative cursor-pointer" 
+                      onClick={() => hasTracks && setShowTracks(true)}
+                      
+                      // --- SWIPE UP NA OKŁADCE ŻEBY OTWORZYĆ TRACKLISTĘ ---
+                      drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
+                      onDragEnd={(e, { offset }) => { if (offset.y < -40 && hasTracks) setShowTracks(true); }}
+                    >
                       <img src={album.coverUrl} className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105" alt="" />
                       <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-4 left-4 md:bottom-6 md:left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/50 hover:text-brand transition-all border border-white/10 active:scale-90 shadow-2xl z-50 hover:border-brand/30">
                         <Edit3 size={18} />
@@ -187,11 +214,10 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               ) : (
 
                 /* ========================================== */
-                /* VIEW MODE PANEL (PANCERNY I KOMPAKTOWY)    */
+                /* VIEW MODE PANEL                            */
                 /* ========================================== */
                 <div className="flex-1 flex flex-col justify-between no-scrollbar p-6 md:p-14 lg:p-20 text-left relative min-h-0">
                   
-                  {/* Tytuł - Środkuje się w wolnej przestrzeni, obcięty do 3 linii na mobile, żeby nie zepsuć układu */}
                   <header className="flex-1 flex flex-col justify-center pr-12 md:pr-0 min-h-0">
                     <div className="flex flex-wrap gap-x-2 gap-y-1 mb-2">
                       {artists.map((name, i) => (
@@ -207,17 +233,14 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                     </div>
                   </header>
 
-                  {/* Sztywny Dół - Ekstremalnie skompresowany, zawsze widoczny na mobile */}
-                  <div className="shrink-0 flex flex-col gap-3 md:gap-6 border-t border-white/5 pt-4 md:pt-6">
+                  <div className="shrink-0 flex flex-col gap-3 md:gap-6 border-t border-white/5 pt-4 md:pt-6 cursor-default">
                     
-                    {/* Poziom 3: Rok wydania i Gatunek */}
                     <div className="flex flex-wrap gap-2">
                       <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
                       {album.genre && <Badge icon={<Disc size={12}/>} text={album.genre} />}
                       {Number(album.rating) > 0 && <Badge icon={<Star size={12} fill="currentColor"/>} text={`${album.rating}/10`} brand />}
                     </div>
 
-                    {/* Poziom 2: Status i Format */}
                     <div className="flex flex-wrap gap-2">
                       <Badge icon={<Search size={12}/>} text={album.format} brand />
                       <Badge 
@@ -227,14 +250,13 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                       />
                     </div>
                     
-                    {/* Poziom 1 (NA SAMYM DOLE): Linki Spotify i YouTube */}
                     <div className="grid grid-cols-2 gap-2 md:gap-3 pb-2 md:pb-0">
                       <ActionButton 
-                        icon={<Play size={14} mdSize={16} fill="black"/>} text="Spotify" primary 
+                        icon={<Play size={14} fill="black"/>} text="Spotify" primary 
                         onClick={() => { window.location.href = `spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`; }} 
                       />
                       <ActionButton 
-                        icon={<MonitorPlay size={14} mdSize={16}/>} text="YouTube" 
+                        icon={<MonitorPlay size={14}/>} text="YouTube" 
                         onClick={() => { window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`, '_blank', 'noopener,noreferrer'); }} 
                       />
                     </div>
@@ -250,7 +272,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   );
 };
 
-// Zmniejszone padingi i fonty na telefonie dla maksymalnej pojemności
+// MINI COMPONENTS
 const Badge = ({ icon, text, brand, colorClass }: any) => (
   <span className={`px-3 py-1.5 md:px-4 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-2 shadow-lg transition-all shrink-0
     ${colorClass ? colorClass : (brand ? 'bg-brand text-black shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5 shadow-black/20')}
