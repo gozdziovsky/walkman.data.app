@@ -1,32 +1,23 @@
 import { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { X, Image as ImageIcon, Loader2, Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Image as ImageIcon, Loader2, Search, ListMusic } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import type { Album } from '../../../types/album';
 
-export const DigitalAddModal = ({ onClose, onSuccess, searchSource, discogsToken }: any) => {
+export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', discogsToken }: any) => {
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [localSource, setLocalSource] = useState<'itunes' | 'discogs'>(searchSource);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [localSource, setLocalSource] = useState<'itunes' | 'discogs'>(searchSource || 'itunes');
-
   const [form, setForm] = useState({
-    artist: '', 
-    title: '', 
-    coverUrl: '', 
-    genre: '',
-    year: new Date().getFullYear(), 
-    format: 'FLAC' as any, 
-    status: 'MAM' as any, 
-    rating: 0, 
-    spotify_url: '', 
-    youtube_url: '', 
-    tracks: ''
+    artist: '', title: '', coverUrl: '', genre: '',
+    year: new Date().getFullYear(), format: 'FLAC', 
+    status: 'MAM' as 'MAM' | 'SZUKAM', 
+    rating: 0, spotify_url: '', youtube_url: '', tracks: ''
   });
 
   const search = async () => {
@@ -37,12 +28,9 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource, discogsToken
         const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=15&country=PL`);
         const data = await res.json();
         setResults(data.results.map((r: any) => ({
-          collectionId: r.collectionId,
-          title: r.collectionName, 
-          artist: r.artistName,
+          collectionId: r.collectionId, title: r.collectionName, artist: r.artistName,
           coverUrl: r.artworkUrl100.replace('100x100', '800x800'),
-          year: r.releaseDate ? new Date(r.releaseDate).getFullYear() : '',
-          genre: r.primaryGenreName
+          year: r.releaseDate ? new Date(r.releaseDate).getFullYear() : '', genre: r.primaryGenreName
         })));
       } else {
         if (!discogsToken) { alert("Brak tokenu Discogs!"); return; }
@@ -57,6 +45,7 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource, discogsToken
   };
 
   const handleSelect = async (item: any) => {
+    setSearching(true);
     let fetchedTracks = '';
     if (localSource === 'itunes' && item.collectionId) {
       try {
@@ -69,6 +58,7 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource, discogsToken
     setForm({ ...form, artist: item.artist, title: item.title, coverUrl: item.coverUrl, genre: item.genre, year: parseInt(item.year) || form.year, tracks: fetchedTracks });
     setImagePreview(item.coverUrl);
     setResults([]);
+    setSearching(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,53 +72,83 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource, discogsToken
         finalUrl = supabase.storage.from('album-covers').getPublicUrl(path).data.publicUrl;
       }
       await supabase.from('albums').insert([{ ...form, coverUrl: finalUrl }]);
-      onSuccess(); 
-      onClose();
-    } catch (err: any) { alert(err.message); } finally { setLoading(false); }
+      onSuccess(); onClose();
+    } catch (err: any) { alert(err.message); } 
+    finally { setLoading(false); }
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-md flex items-center justify-center p-6" onClick={onClose}>
-      <motion.div initial={{ y: 50 }} animate={{ y: 0 }} className="bg-zinc-900 w-full max-w-2xl rounded-[3rem] p-8 max-h-[90vh] overflow-y-auto no-scrollbar border border-white/5" onClick={e => e.stopPropagation()}>
-        <header className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-black uppercase italic">Add <span className="text-brand">Digital</span></h2>
-          <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-500 hover:text-white"><X size={20} /></button>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-xl flex items-center justify-center p-0 md:p-6" onClick={onClose}>
+      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-zinc-900 w-full max-w-3xl rounded-t-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 overflow-y-auto max-h-[95vh] border-t border-white/10 shadow-2xl no-scrollbar relative" onClick={e => e.stopPropagation()}>
+        <header className="flex justify-between items-center mb-10">
+          <h2 className="text-3xl font-black uppercase italic text-white tracking-tighter">Add <span className="text-brand">Digital</span></h2>
+          <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
         </header>
 
-        <div className="space-y-6">
-          {/* Search Section */}
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
-              <input className="w-full bg-zinc-950 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm font-bold" placeholder="Search for album..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
+        <section className="mb-10 space-y-4">
+          <div className="flex justify-between items-end px-1">
+            <span className="text-[8px] font-black uppercase text-zinc-500 tracking-widest">Silnik wyszukiwania</span>
+            <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
+              <button type="button" onClick={() => setLocalSource('itunes')} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${localSource === 'itunes' ? 'bg-white text-black shadow-lg' : 'text-zinc-600 hover:text-white'}`}>iTunes</button>
+              <button type="button" onClick={() => setLocalSource('discogs')} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${localSource === 'discogs' ? 'bg-brand text-black shadow-lg' : 'text-zinc-600 hover:text-white'}`}>Discogs</button>
             </div>
-            <button onClick={search} className="px-8 bg-white text-black rounded-xl font-black uppercase text-[10px] tracking-widest">{searching ? <Loader2 className="animate-spin" size={16} /> : 'Find'}</button>
           </div>
+          <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 transition-all h-16 shadow-inner">
+            <div className="flex items-center justify-center pl-6 text-zinc-600"><Search size={20} /></div>
+            <input className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700" placeholder={`Szukaj w ${localSource.toUpperCase()}...`} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
+            <button onClick={search} className="px-8 bg-white hover:bg-brand text-black font-black uppercase text-[11px] tracking-widest transition-colors">
+              {searching ? <Loader2 size={18} className="animate-spin" /> : 'Szukaj'}
+            </button>
+          </div>
+          <AnimatePresence>
+            {results.length > 0 && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden shadow-2xl max-h-60 overflow-y-auto no-scrollbar">
+                {results.map((r, i) => (
+                  <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-brand/10 text-left border-b border-white/5 last:border-0 transition-colors group">
+                    <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover shadow-lg" alt="" />
+                    <div className="truncate">
+                      <p className="text-xs font-black uppercase group-hover:text-brand transition-colors truncate">{r.title}</p>
+                      <p className="text-[10px] text-zinc-500 uppercase font-bold truncate">{r.artist}</p>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
 
-          {results.length > 0 && (
-            <div className="bg-zinc-800 rounded-2xl overflow-hidden divide-y divide-white/5">
-              {results.map((r, i) => (
-                <button key={i} onClick={() => handleSelect(r)} className="w-full p-4 flex items-center gap-4 hover:bg-brand/10 text-left transition-colors">
-                  <img src={r.coverUrl} className="w-12 h-12 rounded-lg object-cover" />
-                  <div>
-                    <p className="text-xs font-black uppercase">{r.title}</p>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase">{r.artist}</p>
-                  </div>
-                </button>
-              ))}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="flex flex-col md:flex-row gap-8">
+            <div onClick={() => fileInputRef.current?.click()} className="w-full md:w-52 aspect-square bg-zinc-950 rounded-[2.5rem] border-2 border-dashed border-white/5 flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-brand/30 transition-colors shrink-0">
+              {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover" alt="" /> : <ImageIcon className="text-zinc-800 group-hover:text-brand/30 transition-colors" size={40} />}
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); setImagePreview(URL.createObjectURL(e.target.files[0])); } }} />
             </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-             <div className="grid grid-cols-2 gap-4">
-               <input required className="bg-zinc-950 border border-white/5 rounded-xl p-4 text-sm font-bold" placeholder="Artist" value={form.artist} onChange={e => setForm({...form, artist: e.target.value})} />
-               <input required className="bg-zinc-950 border border-white/5 rounded-xl p-4 text-sm font-bold" placeholder="Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
-             </div>
-             <textarea className="w-full bg-zinc-950 border border-white/5 rounded-xl p-4 text-xs font-mono h-32" placeholder="Tracklist" value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
-             <button type="submit" disabled={loading} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs tracking-widest">{loading ? 'Saving...' : 'Archive Record'}</button>
-          </form>
-        </div>
+            <div className="flex-1 space-y-5">
+              <FormInput label="Wykonawca" value={form.artist} onChange={v => setForm({...form, artist: v})} />
+              <FormInput label="Tytuł" value={form.title} onChange={v => setForm({...form, title: v})} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <FormInput label="Rok" type="number" value={form.year} onChange={v => setForm({...form, year: parseInt(v)})} />
+            <FormInput label="Format" value={form.format} onChange={v => setForm({...form, format: v})} />
+            <FormInput label="Ocena" type="number" value={form.rating} onChange={v => setForm({...form, rating: parseInt(v)})} />
+          </div>
+          <div className="space-y-2">
+             <label className="text-[9px] font-black uppercase text-zinc-600 ml-1 flex items-center gap-2"><ListMusic size={12}/> Tracklista</label>
+             <textarea className="w-full bg-zinc-950 border border-white/5 rounded-2xl p-5 text-xs font-mono text-zinc-400 h-40 resize-none outline-none focus:border-brand/50 transition-all no-scrollbar" placeholder="Wklej listę utworów..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
+          </div>
+          <button type="submit" disabled={loading} className="w-full py-6 bg-brand text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all shadow-2xl">
+            {loading ? 'Archwizowanie...' : 'Zapisz w Digital Archive'}
+          </button>
+        </form>
       </motion.div>
     </motion.div>
   );
 };
+
+const FormInput = ({ label, value, onChange, type = "text" }: any) => (
+  <div className="space-y-1 text-left">
+    <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">{label}</label>
+    <input type={type} required className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all" value={value} onChange={e => onChange(e.target.value)} />
+  </div>
+);
