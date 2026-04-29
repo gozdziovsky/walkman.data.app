@@ -25,11 +25,15 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
 
   const [filterFormat, setFilterFormat] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  
+  // Stany globalne pobierane z systemu
   const [cols, setCols] = useState(() => parseInt(localStorage.getItem('walkman_cols') || '3'));
+  const [showNav, setShowNav] = useState(() => localStorage.getItem('show_nav') !== 'false');
 
   useEffect(() => {
     const syncSettings = () => {
       setCols(parseInt(localStorage.getItem('walkman_cols') || '3'));
+      setShowNav(localStorage.getItem('show_nav') !== 'false');
     };
     window.addEventListener('storage_update', syncSettings);
     return () => window.removeEventListener('storage_update', syncSettings);
@@ -85,12 +89,17 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
   const discogsToken = localStorage.getItem('discogs_token') || '';
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white pb-32 pt-20">
+    <div className="min-h-screen bg-[#09090b] text-white pb-32">
       <style>{`:root { --brand-color: ${themeColor}; } .text-brand { color: var(--brand-color) !important; } .bg-brand { background-color: var(--brand-color) !important; } .border-brand { border-color: var(--brand-color) !important; }`}</style>
       
-      <header className="px-6 space-y-6 max-w-[1800px] mx-auto w-full">
+      {/* KLUCZOWA ZMIANA: Dynamiczny pt-2 vs pt-10
+        Jeśli showNav = true, pt-2 przytula logo od razu do paska.
+        Jeśli showNav = false, pt-10 robi za bezpieczną strefę dla notcha w iPhonie, 
+        ale całościowo logo i tak jest znacznie wyżej niż wtedy, gdy pasek istniał. 
+      */}
+      <header className={`px-6 space-y-6 max-w-[1800px] mx-auto w-full transition-all duration-500 ease-out ${showNav ? 'pt-2' : 'pt-10 md:pt-12'}`}>
         {/* LOGO */}
-        <div className="flex flex-col items-center justify-center pt-1"> 
+        <div className="flex flex-col items-center justify-center"> 
           <img src={logo} alt="Logo" className="w-full max-w-[320px] md:max-w-[480px] h-auto object-contain select-none" />
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand mt-1 italic opacity-40">{archiveTitle}</p>
         </div>
@@ -163,7 +172,7 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
               >
                 <img src={getOptimizedCover(album.coverUrl, 'grid')} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
                 
-                {/* RESTORED CLIP-PATH TRIANGLES */}
+                {/* CLIP-PATH TRIANGLES */}
                 {album.tracks && (
                   <div className="absolute top-0 left-0 w-8 h-8 bg-black/60 backdrop-blur-md z-10" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}>
                     <ListMusic size={10} className="absolute top-1.5 left-1.5 text-white/90" />
@@ -245,7 +254,7 @@ const StatBox = ({ label, val, colorClass, active, onClick }: any) => (
 );
 
 const FilterBtn = ({ label, active, onClick, activeClass = 'bg-white text-black' }: any) => (
-  <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass : 'bg-zinc-800/30 text-zinc-500 border-white/5'}`}>{label}</button>
+  <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass : 'bg-white/5 text-zinc-500 border-white/5'}`}>{label}</button>
 );
 
 const FilterLabel = ({ icon, title }: any) => (
