@@ -43,9 +43,11 @@ export const SettingsModal = ({ onClose, cols, setCols }: any) => {
     >
       <motion.div 
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 35, stiffness: 400 }}
+        // 1. ZMIANA: Zastępujemy agresywną sprężynę idealnie płynną krzywą (tzw. Apple Ease)
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         onClick={e => e.stopPropagation()}
-        className="bg-[#0e0e10] w-full max-w-2xl h-[92vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-[3.5rem] flex flex-col border border-white/10 border-b-0 md:border-b shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden relative"
+        // 2. ZMIANA: Dodajemy transform-gpu oraz will-change-transform
+        className="bg-[#0e0e10] w-full max-w-2xl h-[92vh] md:h-auto md:max-h-[85vh] rounded-t-[2.5rem] md:rounded-[3.5rem] flex flex-col border border-white/10 border-b-0 md:border-b shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden relative transform-gpu will-change-transform"
       >
         {/* HEADER */}
         <header className="shrink-0 p-8 md:p-12 pb-6 flex justify-between items-start bg-[#0e0e10] z-10 border-b border-white/5">
