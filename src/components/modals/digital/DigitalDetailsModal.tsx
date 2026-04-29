@@ -41,7 +41,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
       className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6 lg:p-12" 
       onClick={onClose}
     >
-      {/* Desktop Navigation */}
+      {/* Desktop Navigation Arrows */}
       {!isEdit && (
         <div className="hidden lg:contents">
           {onPrev && <button onClick={(e) => { e.stopPropagation(); paginate(-1, onPrev); }} className="absolute left-8 p-5 text-white/5 hover:text-brand transition-all active:scale-90"><ChevronLeft size={64} /></button>}
@@ -51,8 +51,8 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
 
       <motion.div 
         key={album.id} custom={direction}
-        initial={{ x: direction > 0 ? 300 : (direction < 0 ? -300 : 0), opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
+        initial={{ x: direction > 0 ? 300 : (direction < 0 ? -300 : 0), y: direction === 0 ? 100 : 0, opacity: 0 }}
+        animate={{ x: 0, y: 0, opacity: 1 }}
         exit={{ x: direction < 0 ? 300 : (direction > 0 ? -300 : 0), opacity: 0 }}
         transition={{ type: "tween", ease: "circOut", duration: 0.3 }}
         drag={!isEdit ? true : false} 
@@ -71,8 +71,8 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
         className="bg-[#0e0e10] w-full max-w-6xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row h-auto max-h-[92vh] md:h-auto shadow-2xl relative border border-white/5"
         onClick={e => e.stopPropagation()}
       >
-        {/* LEWA STRONA: MULTIMEDIA */}
-        <div className="w-full md:w-1/2 aspect-square relative bg-black shrink-0 group">
+        {/* LEFT: COVER / TRACKLIST */}
+        <div className="w-full md:w-1/2 aspect-square relative bg-zinc-950 shrink-0 group border-r border-white/5">
           <AnimatePresence mode="wait">
             {showTracks ? (
               <motion.div key="t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 p-8 overflow-y-auto bg-black/95 z-20 no-scrollbar text-left pb-24">
@@ -94,14 +94,14 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               </motion.div>
             )}
           </AnimatePresence>
-          <button onClick={onClose} className="absolute top-6 left-6 p-4 bg-black/40 hover:bg-white hover:text-black transition-all rounded-full z-30"><X size={20} /></button>
+          <button onClick={onClose} className="absolute top-6 left-6 p-4 bg-black/40 hover:bg-brand hover:text-black transition-all rounded-full z-30"><X size={20} /></button>
         </div>
 
-        {/* PRAWA STRONA: INFO - NOWY, CZYSTY UKŁAD */}
-        <div className="p-8 md:p-14 flex-1 flex flex-col bg-zinc-900/40 justify-between min-h-0">
+        {/* RIGHT: CONTENT (Static & Optimized) */}
+        <div className="p-8 md:p-14 flex-1 flex flex-col bg-zinc-900/40 min-h-0">
           <AnimatePresence mode="wait">
             {isEdit ? (
-              <motion.div key="edit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 my-auto text-left w-full">
+              <motion.div key="edit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 my-auto text-left w-full">
                  <div className="space-y-4">
                     <FormInput label="Artist" value={form.artist} onChange={(v:any) => setForm({...form, artist: v})} />
                     <FormInput label="Title" value={form.title} onChange={(v:any) => setForm({...form, title: v})} />
@@ -111,37 +111,39 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                     </div>
                  </div>
                  <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
-                    <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all">{loading ? 'Saving...' : 'Save Changes'}</button>
+                    <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs active:scale-95 transition-all shadow-xl shadow-brand/10">{loading ? 'Saving...' : 'Confirm Changes'}</button>
                     <div className="flex gap-3">
                       <button onClick={() => setIsEdit(false)} className="flex-1 py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase text-[10px] opacity-50">Cancel</button>
-                      <button onClick={handleDelete} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all"><Trash2 size={18}/></button>
+                      <button onClick={handleDelete} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95"><Trash2 size={18}/></button>
                     </div>
                  </div>
               </motion.div>
             ) : (
               <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col justify-between text-left overflow-hidden">
-                {/* Header */}
+                
+                {/* 1. Header (Artist + Album) */}
                 <header>
-                  <button onClick={() => onArtistClick(album.artist)} className="text-brand font-black uppercase text-[11px] tracking-tighter italic hover:text-white transition-colors mb-2">{album.artist}</button>
-                  <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.85] text-white line-clamp-3">{album.title}</h2>
+                  <button onClick={() => onArtistClick(album.artist)} className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors mb-2">{album.artist}</button>
+                  <h2 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase italic tracking-tighter leading-[0.85] text-white line-clamp-3">{album.title}</h2>
                 </header>
 
-                {/* Data & Badges */}
-                <div className="space-y-8">
-                  <div className="flex flex-wrap gap-2 pt-4 border-t border-white/5">
+                {/* 2. Middle & Bottom (Data Bar + Compact Buttons) */}
+                <div className="mt-auto space-y-6">
+                  {/* Metadata Bar */}
+                  <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
                     <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
                     <Badge icon={<Disc size={12}/>} text={album.format} brand />
                     {Number(album.rating) > 0 && <Badge icon={<Star size={12} fill="currentColor"/>} text={`${album.rating}/10`} brand />}
                   </div>
                   
-                  {/* Actions */}
-                  <div className="grid grid-cols-1 gap-3">
-                    <ActionButton icon={<Play size={18} fill="black"/>} text="Play on Spotify" primary onClick={() => window.open(`spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
-                    <ActionButton icon={<MonitorPlay size={18}/>} text="YouTube Search" onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
+                  {/* Action Buttons in One Row */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <ActionButton icon={<Play size={16} fill="black"/>} text="Spotify" primary onClick={() => window.open(`spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
+                    <ActionButton icon={<MonitorPlay size={16}/>} text="YouTube" onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
                   </div>
                 </div>
 
-                <footer className="pt-8 opacity-10 text-[8px] font-black uppercase tracking-[0.4em] mt-auto">Digital Archive System</footer>
+                <footer className="pt-8 opacity-10 text-[8px] font-black uppercase tracking-[0.4em]">GS Archive // Stable V3</footer>
               </motion.div>
             )}
           </AnimatePresence>
@@ -151,13 +153,15 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   );
 };
 
-// Pomocnicze komponenty
+// COMPACT COMPONENTS
 const Badge = ({ icon, text, brand }: any) => (
-  <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${brand ? 'bg-brand text-black shadow-lg shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5'}`}>{icon} {text}</span>
+  <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${brand ? 'bg-brand text-black shadow-lg shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5'}`}>{icon} {text}</span>
 );
+
 const ActionButton = ({ icon, text, primary, onClick }: any) => (
-  <button onClick={onClick} className={`py-5 rounded-[2rem] font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl ${primary ? 'bg-white text-black hover:bg-brand' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>{icon} {text}</button>
+  <button onClick={onClick} className={`py-4 rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl ${primary ? 'bg-white text-black hover:bg-brand' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>{icon} {text}</button>
 );
+
 const FormInput = ({ label, value, onChange, type = "text" }: any) => (
   <div className="space-y-1 text-left">
     <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">{label}</label>
