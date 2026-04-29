@@ -1,30 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, Play, MonitorPlay, Trash2, Edit3, Save, 
-  Loader2, Calendar, Music, ListMusic, ChevronUp, 
-  ChevronDown, Star, ChevronLeft, ChevronRight, Disc 
-} from 'lucide-react';
+import { X, Play, MonitorPlay, Trash2, Edit3, Loader2, Calendar, Music, ListMusic, ChevronUp, ChevronDown, Star, ChevronLeft, ChevronRight, Disc } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import type { Album } from '../../../types/album';
 
-interface DetailsModalProps {
-  album: Album;
-  onClose: () => void;
-  onUpdateSuccess: () => void;
-  onArtistClick: (name: string) => void;
-  onNext?: () => void;
-  onPrev?: () => void;
-}
-
-export const DigitalDetailsModal = ({ 
-  album, onClose, onUpdateSuccess, onArtistClick, onNext, onPrev 
-}: DetailsModalProps) => {
+export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, onNext, onPrev }: any) => {
   const [isEdit, setIsEdit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showTracks, setShowTracks] = useState(false);
   const [direction, setDirection] = useState(0); 
-  const [form, setForm] = useState<Album>({ ...album });
+  const [form, setForm] = useState({ ...album });
 
   useEffect(() => {
     setForm({ ...album });
@@ -36,49 +20,56 @@ export const DigitalDetailsModal = ({
     setLoading(true);
     try {
       await supabase.from('albums').update(form).eq('id', album.id);
-      onUpdateSuccess(); 
-      setIsEdit(false);
-    } catch (err: any) { alert(err.message); } 
-    finally { setLoading(false); }
+      onUpdateSuccess(); setIsEdit(false);
+    } catch (err: any) { alert(err.message); } finally { setLoading(false); }
   };
 
   const handleDelete = async () => {
     if (confirm(`Usunąć "${album.title}"?`)) {
       setLoading(true);
       await supabase.from('albums').delete().eq('id', album.id);
-      onUpdateSuccess();
-      onClose();
+      onUpdateSuccess(); onClose();
     }
   };
 
   const variants = {
     enter: (d: number) => ({ x: d > 0 ? 500 : -500, opacity: 0, scale: 0.95 }),
-    center: { x: 0, opacity: 1, scale: 1 },
+    center: { x: 0, y: 0, opacity: 1, scale: 1 },
     exit: (d: number) => ({ x: d < 0 ? 500 : -500, opacity: 0, scale: 0.95 })
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-0 md:p-6"
-      onClick={onClose}
-    >
-      {!isEdit && onPrev && (
-        <button onClick={(e) => { e.stopPropagation(); setDirection(-1); onPrev(); }} className="hidden md:flex absolute left-8 p-5 text-white/20 hover:text-brand transition-all"><ChevronLeft size={60} /></button>
-      )}
-      {!isEdit && onNext && (
-        <button onClick={(e) => { e.stopPropagation(); setDirection(1); onNext(); }} className="hidden md:flex absolute right-8 p-5 text-white/20 hover:text-brand transition-all"><ChevronRight size={60} /></button>
-      )}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-0 md:p-6" onClick={onClose}>
+      {!isEdit && onPrev && <button onClick={(e) => { e.stopPropagation(); setDirection(-1); onPrev(); }} className="hidden md:flex absolute left-8 p-5 text-white/20 hover:text-brand transition-all"><ChevronLeft size={60} /></button>}
+      {!isEdit && onNext && <button onClick={(e) => { e.stopPropagation(); setDirection(1); onNext(); }} className="hidden md:flex absolute right-8 p-5 text-white/20 hover:text-brand transition-all"><ChevronRight size={60} /></button>}
 
       <motion.div 
-        key={album.id} custom={direction} variants={variants}
+        key={album.id} 
+        custom={direction} 
+        variants={variants}
         initial="enter" animate="center" exit="exit"
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        drag={!isEdit ? "x" : false} dragConstraints={{ left: 0, right: 0 }}
+        
+        // --- MASTER GESTURE CONTROL ---
+        drag={!isEdit ? true : false}
+        dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+        dragElastic={0.4}
         onDragEnd={(_, info) => {
-          if (info.offset.x < -100 && onNext) { setDirection(1); onNext(); }
-          else if (info.offset.x > 100 && onPrev) { setDirection(-1); onPrev(); }
+          const { x, y } = info.offset;
+          const threshold = 100;
+          
+          // Decydujemy czy ruch był bardziej poziomy czy pionowy
+          if (Math.abs(x) > Math.abs(y)) {
+            // Poziomy: Nawigacja albumów
+            if (x < -threshold && onNext) { setDirection(1); onNext(); }
+            else if (x > threshold && onPrev) { setDirection(-1); onPrev(); }
+          } else {
+            // Pionowy: Tracklista / Zamknięcie
+            if (y < -threshold) { setShowTracks(true); } // Góra -> Tracklista
+            else if (y > threshold) { onClose(); }       // Dół -> Zamknij
+          }
         }}
+        
         className="bg-zinc-900 w-full max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col md:flex-row h-[95vh] md:h-auto shadow-2xl relative border border-white/5"
         onClick={e => e.stopPropagation()}
       >
@@ -94,9 +85,9 @@ export const DigitalDetailsModal = ({
               </motion.div>
             ) : (
               <motion.div key="c" className="w-full h-full relative cursor-ns-resize" onClick={() => album.tracks && setShowTracks(true)}>
-                <img src={album.coverUrl} className="w-full h-full object-cover pointer-events-none" alt="" />
+                <img src={album.coverUrl} className="w-full h-full object-cover pointer-events-none select-none" alt="" />
                 {album.tracks && (
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-40 animate-bounce">
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-40 group-hover:opacity-100 transition-opacity animate-bounce">
                     <ChevronUp size={20} /><span className="text-[8px] font-black uppercase tracking-widest">Tracks</span>
                   </div>
                 )}
@@ -154,11 +145,9 @@ export const DigitalDetailsModal = ({
 const Badge = ({ icon, text, brand }: any) => (
   <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${brand ? 'bg-brand text-black' : 'bg-white/5 text-zinc-400 border border-white/5'}`}>{icon} {text}</span>
 );
-
 const ActionButton = ({ icon, text, primary, onClick }: any) => (
   <button onClick={onClick} className={`py-5 rounded-[2rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all ${primary ? 'bg-white text-black hover:bg-brand' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>{icon} {text}</button>
 );
-
 const FormInput = ({ label, value, onChange, type = "text" }: any) => (
   <div className="space-y-1 text-left">
     <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">{label}</label>
