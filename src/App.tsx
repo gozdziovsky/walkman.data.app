@@ -30,13 +30,11 @@ const ArchiveLink = ({ to, label }: { to: string, label: string }) => (
     className={({ isActive }) => `
       text-[10px] font-black uppercase tracking-[0.2em] 
       py-2 px-2 rounded-full border flex-1 text-center
-      
-      /* Klucz do płynności: precyzyjne przejście i zdefiniowane stany bazowe */
       transition-all duration-500 ease-out
       
       ${isActive 
-        ? 'text-brand border-brand/40 bg-brand/10 shadow-[0_0_25px_rgba(var(--brand-rgb),0.15)]' 
-        : 'text-zinc-600 border-white/0 bg-transparent shadow-[0_0_25px_rgba(0,0,0,0)] hover:text-zinc-400'}
+        ? 'text-brand border-zinc-800 bg-zinc-800/50 shadow-[0_0_20px_rgba(0,0,0,0.3)]' 
+        : 'text-zinc-600 border-white/0 bg-transparent hover:text-zinc-400'}
     `}
   >
     {label}
