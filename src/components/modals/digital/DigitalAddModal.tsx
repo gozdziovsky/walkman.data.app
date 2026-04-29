@@ -78,7 +78,16 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-xl flex items-center justify-center p-0 md:p-6" onClick={onClose}>
-      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-zinc-900 w-full max-w-3xl rounded-t-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 overflow-y-auto max-h-[95vh] border-t border-white/10 shadow-2xl no-scrollbar relative" onClick={e => e.stopPropagation()}>
+      <motion.div 
+        initial={{ y: "100%" }} 
+        animate={{ y: 0 }} 
+        exit={{ y: "100%" }}
+        // Zastosowanie płynnej krzywej Apple:
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        // Dodanie akceleracji GPU:
+        className="bg-zinc-900 w-full max-w-3xl rounded-t-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 overflow-y-auto max-h-[95vh] border-t border-white/10 shadow-2xl no-scrollbar relative transform-gpu will-change-transform" 
+        onClick={e => e.stopPropagation()}
+      >
         <header className="flex justify-between items-center mb-10 text-white">
           <h2 className="text-3xl font-black uppercase italic tracking-tighter">Add <span className="text-brand">Digital</span></h2>
           <button onClick={onClose} className="p-3 bg-zinc-800 rounded-full text-zinc-500 hover:text-white transition-colors"><X size={20} /></button>
