@@ -59,10 +59,8 @@ export const ArchiveEngine = ({
   const processedAlbums = useMemo(() => {
     let result = [...albums];
     if (searchTerm) {
-      result = result.filter(a => 
-        a.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        a.artist.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const s = searchTerm.toLowerCase();
+      result = result.filter(a => a.title.toLowerCase().includes(s) || a.artist.toLowerCase().includes(s));
     }
     if (filterFormat !== 'ALL') result = result.filter(a => a.format === filterFormat);
     if (filterStatus !== 'ALL') result = result.filter(a => a.status === filterStatus);
@@ -88,7 +86,7 @@ export const ArchiveEngine = ({
     if (node) observer.current.observe(node);
   }, [visibleCount, processedAlbums.length]);
 
-  useEffect(() => { setVisibleCount(40); }, [searchTerm, filterFormat, filterStatus, sortBy]);
+  useEffect(() => { setVisibleCount(40); }, [searchTerm, filterFormat, filterStatus, sortBy, tableName]);
 
   const currentIndex = useMemo(() => 
     processedAlbums.findIndex(a => a.id === selectedAlbum?.id),
@@ -105,8 +103,8 @@ export const ArchiveEngine = ({
     <div className="min-h-screen bg-[#09090b] text-white pb-32">
       <style>{`:root { --brand-color: ${themeColor}; } .text-brand { color: var(--brand-color) !important; } .bg-brand { background-color: var(--brand-color) !important; } .border-brand { border-color: var(--brand-color) !important; }`}</style>
       
-      <header className="px-6 mt-2 space-y-6 max-w-[1800px] mx-auto w-full">
-        <div className="flex flex-col items-center justify-center py-2"> 
+      <header className="px-6 mt-1 space-y-6 max-w-[1800px] mx-auto w-full">
+        <div className="flex flex-col items-center justify-center pt-2"> 
           <img src={logo} alt="Logo" className="w-full max-w-[320px] md:max-w-[480px] h-auto object-contain select-none" />
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand mt-1 italic opacity-40">{archiveTitle}</p>
         </div>
@@ -118,14 +116,19 @@ export const ArchiveEngine = ({
             <StatBox label="Wanted" val={stats.wanted} colorClass="text-orange-500" active={filterStatus === 'SZUKAM'} onClick={() => setFilterStatus('SZUKAM')} />
           </div>
           <div className="flex items-center gap-1 mr-2">
-            <button onClick={() => setShowFilters(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90 relative"><Filter size={18} />{(filterFormat !== 'ALL' || filterStatus !== 'ALL') && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-brand rounded-full border-2 border-[#09090b]" />}</button>
-            <button onClick={() => setShowSettings(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90"><Settings2 size={18} /></button>
+            <button onClick={() => setShowFilters(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90 relative">
+              <Filter size={18} />
+              {(filterFormat !== 'ALL' || filterStatus !== 'ALL') && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-brand rounded-full border-2 border-[#09090b]" />}
+            </button>
+            <button onClick={() => setShowSettings(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90">
+              <Settings2 size={18} />
+            </button>
           </div>
         </div>
 
         <div className="relative">
           <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-600" size={14} />
-          <input type="text" placeholder={`Szukaj w kolekcji...`} className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none focus:bg-zinc-900/60 focus:border-brand/30 transition-all" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <input type="text" placeholder="Szukaj w kolekcji..." className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none focus:bg-zinc-900/60 focus:border-brand/30 transition-all" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
       </header>
 
@@ -133,29 +136,73 @@ export const ArchiveEngine = ({
         <AnimatePresence mode="wait">
           <motion.div
             key={tableName}
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
             className={`grid grid-cols-${cols} md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4`}
           >
             {processedAlbums.slice(0, visibleCount).map((album, idx) => (
               <motion.div 
-                key={album.id} layoutId={album.id}
+                key={album.id}
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: Math.min(idx * 0.01, 0.2) }}
                 ref={idx === visibleCount - 1 ? lastAlbumRef : null}
                 onClick={() => setSelectedAlbum(album)} 
                 className="group relative aspect-square bg-zinc-900 rounded-xl overflow-hidden cursor-pointer shadow-xl active:scale-95 transition-transform"
               >
                 <img src={getOptimizedCover(album.coverUrl, 'grid')} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
-                {album.tracks && <div className="absolute top-0 left-0 w-9 h-9 bg-black/60 backdrop-blur-md z-10" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}><ListMusic size={11} className="absolute top-1.5 left-1.5 text-white/90" /></div>}
+                {album.tracks && <div className="absolute top-0 left-0 w-8 h-8 bg-black/60 backdrop-blur-md z-10" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}><ListMusic size={10} className="absolute top-1.5 left-1.5 text-white/90" /></div>}
                 <div className={`absolute top-0 right-0 w-7 h-7 z-10 ${album.status === 'MAM' ? 'bg-brand' : 'bg-orange-500'}`} style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }} />
               </motion.div>
             ))}
           </motion.div>
         </AnimatePresence>
-        {visibleCount < processedAlbums.length && <div className="w-full h-24 flex items-center justify-center"><Loader2 className="animate-spin text-zinc-600" size={24} /></div>}
       </main>
 
       <button onClick={() => setShowAddModal(true)} className="fixed bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-brand text-black rounded-full flex items-center justify-center shadow-2xl z-50 border-[6px] border-[#09090b] active:scale-90 transition-transform"><Plus size={36} strokeWidth={3} /></button>
 
       <AnimatePresence>
+        {showFilters && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowFilters(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110]" />
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[120] shadow-2xl">
+              <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-10" />
+              <div className="space-y-10 max-w-lg mx-auto pb-6 text-left">
+                <section>
+                  <FilterLabel icon={<BookmarkCheck size={14} />} title="Status" />
+                  <div className="grid grid-cols-3 gap-3">
+                    <FilterBtn label="ALL" active={filterStatus === 'ALL'} onClick={() => setFilterStatus('ALL')} />
+                    <FilterBtn label="OWNED" active={filterStatus === 'MAM'} onClick={() => setFilterStatus('MAM')} activeClass="bg-brand text-black" />
+                    <FilterBtn label="WISH" active={filterStatus === 'SZUKAM'} onClick={() => setFilterStatus('SZUKAM')} activeClass="bg-orange-500 text-black border-orange-500" />
+                  </div>
+                </section>
+                <section>
+                  <FilterLabel icon={<Disc size={14} />} title="Format" />
+                  <div className="grid grid-cols-4 gap-2">
+                    <FilterBtn label="ALL" active={filterFormat === 'ALL'} onClick={() => setFilterFormat('ALL')} />
+                    {formats.map(f => <FilterBtn key={f} label={f} active={filterFormat === f} onClick={() => setFilterFormat(f)} />)}
+                  </div>
+                </section>
+                <section>
+                  <FilterLabel icon={<ArrowUpDown size={14} />} title="Sort by" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <SortBtn label="RECENT" active={sortBy === 'recent'} onClick={() => setSortBy('recent')} />
+                    <SortBtn label="ARTIST" active={sortBy === 'artist'} onClick={() => setSortBy('artist')} />
+                    <SortBtn label="ALBUM" active={sortBy === 'album'} onClick={() => setSortBy('album')} />
+                    <SortBtn label="YEAR" active={sortBy === 'year'} onClick={() => setSortBy('year')} />
+                  </div>
+                </section>
+                <button onClick={() => setShowFilters(false)} className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase text-xs tracking-widest mt-4">Gotowe</button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
         {showAddModal && <AddModal onClose={() => setShowAddModal(false)} onSuccess={fetchAlbums} />}
         {selectedAlbum && <DetailsModal album={selectedAlbum} onClose={() => setSelectedAlbum(null)} onUpdateSuccess={fetchAlbums} onNext={currentIndex < processedAlbums.length - 1 ? () => setSelectedAlbum(processedAlbums[currentIndex + 1]) : undefined} onPrev={currentIndex > 0 ? () => setSelectedAlbum(processedAlbums[currentIndex - 1]) : undefined} onArtistClick={(n:string)=>{setSearchTerm(n);setSelectedAlbum(null);}} />}
       </AnimatePresence>
