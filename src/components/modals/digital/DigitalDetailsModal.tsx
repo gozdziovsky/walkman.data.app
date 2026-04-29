@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Play, MonitorPlay, Trash2, Edit3, Loader2, Calendar, 
   ListMusic, ChevronUp, ChevronDown, Star, ChevronLeft, 
-  ChevronRight, Disc 
+  ChevronRight, Disc, BookmarkCheck, Search
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import type { Album } from '../../../types/album';
@@ -41,13 +41,33 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   const hasTracks = album.tracks && album.tracks.trim().length > 0;
   const paginate = (d: number, action: () => void) => { setDirection(d); action(); };
 
+  // Refined variants for smoother motion
+  const panelVariants = {
+    enter: (d: number) => ({
+      x: d > 0 ? 150 : (d < 0 ? -150 : 0),
+      y: d === 0 ? 50 : 0,
+      opacity: 0,
+      filter: 'blur(10px)'
+    }),
+    center: {
+      x: 0,
+      y: 0,
+      opacity: 1,
+      filter: 'blur(0px)'
+    },
+    exit: (d: number) => ({
+      x: d < 0 ? 150 : (d > 0 ? -150 : 0),
+      opacity: 0,
+      filter: 'blur(10px)'
+    })
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
       className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-xl flex items-end justify-center p-0 md:px-6 lg:px-12" 
       onClick={onClose}
     >
-      {/* Desktop Quick Nav */}
       {!isEdit && (
         <div className="hidden lg:contents">
           {onPrev && <button onClick={(e) => { e.stopPropagation(); paginate(-1, onPrev); }} className="absolute left-8 top-1/2 -translate-y-1/2 p-5 text-white/5 hover:text-brand transition-all active:scale-90"><ChevronLeft size={64} /></button>}
@@ -58,35 +78,35 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
       <motion.div 
         key={album.id}
         custom={direction}
-        initial={{ y: "100%", x: direction > 0 ? 100 : (direction < 0 ? -100 : 0) }}
-        animate={{ y: 0, x: 0 }}
-        exit={{ y: "100%", opacity: 0 }}
-        transition={{ type: "spring", damping: 35, stiffness: 400 }}
+        variants={panelVariants}
+        initial="enter"
+        animate="center"
+        exit="exit"
+        transition={{ 
+          x: { type: "spring", stiffness: 200, damping: 28 }, // More "fluid" feel
+          opacity: { duration: 0.3 },
+          y: { type: "spring", stiffness: 300, damping: 30 }
+        }}
         
-        // --- PRECISION GESTURES ---
         drag={!isEdit ? true : false}
         dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-        dragElastic={0} // Forces the modal to stay stuck to the finger
+        dragElastic={0}
         onDragEnd={(_, info) => {
           const { offset, velocity } = info;
-          const swipeThreshold = 100;
-          
+          const swipeThreshold = 80;
           if (Math.abs(offset.x) > Math.abs(offset.y)) {
-            // Horizontal: Album Navigation
-            if ((offset.x < -swipeThreshold || velocity.x < -500) && onNext) paginate(1, onNext);
-            else if ((offset.x > swipeThreshold || velocity.x > 500) && onPrev) paginate(-1, onPrev);
+            if ((offset.x < -swipeThreshold || velocity.x < -400) && onNext) paginate(1, onNext);
+            else if ((offset.x > swipeThreshold || velocity.x > 400) && onPrev) paginate(-1, onPrev);
           } else {
-            // Vertical: Tracks or Close
             if (offset.y < -swipeThreshold && hasTracks) setShowTracks(true);
-            else if (offset.y > swipeThreshold || velocity.y > 500) onClose();
+            else if (offset.y > swipeThreshold || velocity.y > 400) onClose();
           }
         }}
         
-        // Fixed 92vh height as requested
         className="bg-[#0e0e10] w-full max-w-7xl h-[92vh] rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/5 border-b-0"
         onClick={e => e.stopPropagation()}
       >
-        {/* LEFT: MEDIA SECTION */}
+        {/* LEFT: VISUALS */}
         <div className="w-full md:w-1/2 aspect-square md:aspect-auto md:h-full relative bg-zinc-950 shrink-0 group border-r border-white/5">
           <AnimatePresence mode="wait">
             {showTracks ? (
@@ -101,7 +121,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               <motion.div key="c" className="w-full h-full relative" onClick={() => hasTracks && setShowTracks(true)}>
                 <img src={album.coverUrl} className="w-full h-full object-cover pointer-events-none select-none" alt="" />
                 {!isEdit && (
-                  <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/40 hover:text-brand hover:bg-black transition-all border border-white/10 active:scale-90">
+                  <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/40 hover:text-brand hover:bg-black transition-all border border-white/10 active:scale-90 shadow-2xl">
                     <Edit3 size={18} />
                   </button>
                 )}
@@ -113,10 +133,10 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               </motion.div>
             )}
           </AnimatePresence>
-          <button onClick={onClose} className="absolute top-6 left-6 p-4 bg-black/40 hover:bg-brand hover:text-black transition-all rounded-full z-30"><X size={20} /></button>
+          <button onClick={onClose} className="absolute top-6 left-6 p-4 bg-black/40 hover:bg-white hover:text-black transition-all rounded-full z-30"><X size={20} /></button>
         </div>
 
-        {/* RIGHT: DATA SECTION (Statistically Balanced) */}
+        {/* RIGHT: INFO */}
         <div className="p-8 md:p-14 lg:p-20 flex-1 flex flex-col justify-between bg-gradient-to-br from-[#0e0e10] to-black min-h-0 overflow-hidden">
           <AnimatePresence mode="wait">
             {isEdit ? (
@@ -130,9 +150,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                     </div>
                  </div>
                  <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
-                    <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg shadow-brand/10">
-                      {loading ? 'Saving...' : 'Save Changes'}
-                    </button>
+                    <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg shadow-brand/10">Save Changes</button>
                     <div className="flex gap-3">
                       <button onClick={() => setIsEdit(false)} className="flex-1 py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase text-[10px] opacity-50">Cancel</button>
                       <button onClick={handleDelete} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95"><Trash2 size={18}/></button>
@@ -141,7 +159,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               </motion.div>
             ) : (
               <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col justify-between text-left">
-                {/* 1. Header Area */}
                 <header>
                   <button onClick={() => onArtistClick(album.artist)} className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors mb-2">{album.artist}</button>
                   <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase italic tracking-tighter leading-[0.85] text-white line-clamp-3">
@@ -149,22 +166,29 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                   </h2>
                 </header>
 
-                {/* 2. Bottom Data Area */}
                 <div className="space-y-10">
+                  {/* METADATA BAR WITH STATUS BADGE */}
                   <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
                     <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
                     <Badge icon={<Disc size={12}/>} text={album.format} brand />
+                    
+                    {/* Status Badge: Owned / Wanted */}
+                    <Badge 
+                      icon={album.status === 'MAM' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
+                      text={album.status === 'MAM' ? 'OWNED' : 'WANTED'} 
+                      colorClass={album.status === 'MAM' ? 'bg-brand text-black shadow-brand/20' : 'bg-orange-500 text-black shadow-orange-500/20'}
+                    />
+
                     {Number(album.rating) > 0 && <Badge icon={<Star size={12} fill="currentColor"/>} text={`${album.rating}/10`} brand />}
                   </div>
                   
-                  {/* Single Line Action Buttons */}
                   <div className="grid grid-cols-2 gap-3">
                     <ActionButton icon={<Play size={16} fill="black"/>} text="Spotify" primary onClick={() => window.open(`spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
                     <ActionButton icon={<MonitorPlay size={16}/>} text="YouTube" onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
                   </div>
 
                   <footer className="pt-4 opacity-10 text-[8px] font-black uppercase tracking-[0.4em]">
-                    Archive Control // System V3
+                    Archive System // Stable V3
                   </footer>
                 </div>
               </motion.div>
@@ -177,8 +201,10 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
 };
 
 // MINI COMPONENTS
-const Badge = ({ icon, text, brand }: any) => (
-  <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${brand ? 'bg-brand text-black' : 'bg-white/5 text-zinc-500 border border-white/5'}`}>
+const Badge = ({ icon, text, brand, colorClass }: any) => (
+  <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all
+    ${colorClass ? colorClass : (brand ? 'bg-brand text-black shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5 shadow-black/20')}
+  `}>
     {icon} {text}
   </span>
 );
