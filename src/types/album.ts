@@ -1,9 +1,10 @@
 export interface Album {
   id: string;
+  created_at?: string;
   artist: string;
   title: string;
-  "coverUrl": string; // Nazwa w cudzysłowie pasuje do SQL
-  format: 'FLAC' | 'MP3' | 'Hi-Res' | 'CD' | '-';
+  coverUrl: string;
+  format: string;
   status: 'MAM' | 'SZUKAM';
   year?: number;
   genre?: string;
@@ -11,4 +12,8 @@ export interface Album {
   spotify_url?: string;
   youtube_url?: string;
   tracks?: string;
+  // Pola opcjonalne dla konkretnych archiwów
+  barcode?: string;
+  record_condition?: string;
+  weight?: string;
 }
