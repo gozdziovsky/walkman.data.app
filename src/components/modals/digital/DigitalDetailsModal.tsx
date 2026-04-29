@@ -21,16 +21,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
     setDirection(0);
   }, [album]);
 
-  // Logic: Dynamic Font Scaling
-  const getFontSize = (title: string) => {
-    const len = title.length;
-    if (len < 12) return 'text-6xl md:text-8xl lg:text-9xl';
-    if (len < 25) return 'text-5xl md:text-7xl lg:text-8xl';
-    if (len < 45) return 'text-4xl md:text-5xl lg:text-6xl';
-    return 'text-3xl md:text-4xl lg:text-5xl';
-  };
-
-  // Logic: Artist Splitting with Exceptions
   const artists = useMemo(() => {
     const raw = album.artist || "";
     const exceptions = ["Tyler, The Creator"];
@@ -44,20 +34,19 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
     });
   }, [album.artist]);
 
+  const getFontSize = (title: string) => {
+    const len = title.length;
+    if (len < 12) return 'text-6xl md:text-8xl lg:text-9xl';
+    if (len < 25) return 'text-5xl md:text-7xl lg:text-8xl';
+    return 'text-4xl md:text-5xl lg:text-6xl';
+  };
+
   const handleUpdate = async () => {
     setLoading(true);
     try {
       await supabase.from('albums').update(form).eq('id', album.id);
       onUpdateSuccess(); setIsEdit(false);
     } catch (err: any) { alert(err.message); } finally { setLoading(false); }
-  };
-
-  const handleDelete = async () => {
-    if (confirm(`Permanently delete "${album.title}"?`)) {
-      setLoading(true);
-      await supabase.from('albums').delete().eq('id', album.id);
-      onUpdateSuccess(); onClose();
-    }
   };
 
   const hasTracks = album.tracks && album.tracks.trim().length > 0;
@@ -70,6 +59,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
       direction={direction}
       onNext={onNext ? () => { setDirection(1); onNext(); } : undefined}
       onPrev={onPrev ? () => { setDirection(-1); onPrev(); } : undefined}
+      onSwipeUp={hasTracks ? () => setShowTracks(true) : undefined}
     >
       {/* LEFT: MEDIA SECTION */}
       <div className="w-full md:w-1/2 aspect-square md:h-full relative bg-zinc-950 shrink-0 group border-r border-white/5 overflow-hidden">
@@ -78,7 +68,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
             <motion.div key="t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 p-8 overflow-y-auto bg-black/95 z-20 no-scrollbar text-left pb-32">
               <div className="flex items-center justify-between mb-8 sticky top-0 bg-black/10 py-2">
                 <h4 className="text-brand text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2"><ListMusic size={14}/> Tracks</h4>
-                <button onClick={() => setShowTracks(false)} className="p-2 bg-white/5 rounded-full hover:bg-brand hover:text-black transition-colors"><ChevronDown size={16}/></button>
+                <button onClick={() => setShowTracks(false)} className="p-2 bg-white/5 rounded-full hover:bg-brand transition-colors"><ChevronDown size={16}/></button>
               </div>
               <pre className="text-zinc-500 font-mono text-[11px] md:text-[13px] whitespace-pre-wrap leading-relaxed">{album.tracks}</pre>
             </motion.div>
@@ -86,7 +76,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
             <motion.div key="c" className="w-full h-full relative cursor-ns-resize" onClick={() => hasTracks && setShowTracks(true)}>
               <img src={album.coverUrl} className="w-full h-full object-cover select-none" alt="" />
               {!isEdit && (
-                <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/40 hover:text-brand hover:bg-black transition-all border border-white/10 active:scale-90 shadow-2xl z-50">
+                <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/40 hover:text-brand transition-all border border-white/10 active:scale-90 shadow-2xl z-50">
                   <Edit3 size={18} />
                 </button>
               )}
@@ -114,10 +104,10 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                 </div>
               </div>
               <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
-                <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg shadow-brand/10">Save Changes</button>
+                <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg">Save Changes</button>
                 <div className="flex gap-3">
                   <button onClick={() => setIsEdit(false)} className="flex-1 py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase text-[10px] opacity-50">Cancel</button>
-                  <button onClick={handleDelete} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95"><Trash2 size={18}/></button>
+                  <button onClick={() => { if(confirm('Delete?')) { supabase.from('albums').delete().eq('id', album.id).then(() => { onUpdateSuccess(); onClose(); })} }} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95"><Trash2 size={18}/></button>
                 </div>
               </div>
             </motion.div>
@@ -126,11 +116,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               <header className="pt-2">
                 <div className="flex flex-wrap gap-x-3 gap-y-1 mb-6">
                   {artists.map((name, i) => (
-                    <button 
-                      key={i}
-                      onClick={() => onArtistClick(name)} 
-                      className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors flex items-center"
-                    >
+                    <button key={i} onClick={() => onArtistClick(name)} className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors flex items-center">
                       {name}{i < artists.length - 1 && <span className="text-zinc-700 ml-3 not-italic">/</span>}
                     </button>
                   ))}
@@ -158,7 +144,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                   <ActionButton icon={<Play size={16} fill="black"/>} text="Spotify" primary onClick={() => window.open(`spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
                   <ActionButton icon={<MonitorPlay size={16}/>} text="YouTube" onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
                 </div>
-
                 <footer className="pt-4 opacity-10 text-[8px] font-black uppercase tracking-[0.4em]">GS ARCHIVE // SYSTEM V3</footer>
               </div>
             </motion.div>
@@ -177,13 +162,11 @@ const Badge = ({ icon, text, brand, colorClass }: any) => (
     {icon} {text}
   </span>
 );
-
 const ActionButton = ({ icon, text, primary, onClick }: any) => (
   <button onClick={onClick} className={`py-4 rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl ${primary ? 'bg-white text-black hover:bg-brand' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>
     {icon} {text}
   </button>
 );
-
 const FormInput = ({ label, value, onChange, type = "text" }: any) => (
   <div className="space-y-1 text-left">
     <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">{label}</label>

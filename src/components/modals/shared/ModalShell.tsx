@@ -5,6 +5,7 @@ interface ModalShellProps {
   onClose: () => void;
   onNext?: () => void;
   onPrev?: () => void;
+  onSwipeUp?: () => void; // Nowy prop dla tracklisty
   direction: number;
   albumId: string;
   isEdit: boolean;
@@ -12,13 +13,12 @@ interface ModalShellProps {
 }
 
 export const ModalShell = ({ 
-  onClose, onNext, onPrev, direction, albumId, isEdit, children 
+  onClose, onNext, onPrev, onSwipeUp, direction, albumId, isEdit, children 
 }: ModalShellProps) => {
   
   const panelVariants = {
     enter: (d: number) => ({
       x: d > 0 ? 150 : (d < 0 ? -150 : 0),
-      y: d === 0 ? 50 : 0,
       opacity: 0,
       filter: 'blur(10px)'
     }),
@@ -36,7 +36,6 @@ export const ModalShell = ({
       className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-xl flex items-end justify-center p-0 md:px-6 lg:px-12" 
       onClick={onClose}
     >
-      {/* Desktop Quick Nav */}
       {!isEdit && (
         <div className="hidden lg:contents">
           {onPrev && <button onClick={(e) => { e.stopPropagation(); onPrev(); }} className="absolute left-8 top-1/2 -translate-y-1/2 p-5 text-white/5 hover:text-brand transition-all active:scale-90"><ChevronLeft size={64} /></button>}
@@ -51,13 +50,29 @@ export const ModalShell = ({
         initial="enter" animate="center" exit="exit"
         transition={{ 
           x: { type: "spring", stiffness: 200, damping: 28 },
-          opacity: { duration: 0.3 },
-          y: { type: "spring", stiffness: 300, damping: 30 }
+          opacity: { duration: 0.3 }
         }}
-        drag={!isEdit ? "y" : false}
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.1}
-        onDragEnd={(_, info) => { if (info.offset.y > 150) onClose(); }}
+        
+        // --- PRZYWRÓCONE GESTY ---
+        drag={!isEdit ? true : false}
+        dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+        dragElastic={0}
+        onDragEnd={(_, info) => {
+          const { offset, velocity } = info;
+          const threshold = 80;
+
+          // Horyzontalnie (Next/Prev)
+          if (Math.abs(offset.x) > Math.abs(offset.y)) {
+            if ((offset.x < -threshold || velocity.x < -500) && onNext) onNext();
+            else if ((offset.x > threshold || velocity.x > 500) && onPrev) onPrev();
+          } 
+          // Wertykalnie (Zamknij / Tracklista)
+          else {
+            if (offset.y < -threshold && onSwipeUp) onSwipeUp(); // Góra
+            else if (offset.y > threshold || velocity.y > 500) onClose(); // Dół
+          }
+        }}
+        
         className="bg-[#0e0e10] w-full max-w-7xl h-[92vh] rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/5 border-b-0"
         onClick={e => e.stopPropagation()}
       >
