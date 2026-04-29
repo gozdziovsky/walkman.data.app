@@ -33,7 +33,7 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
           year: r.releaseDate ? new Date(r.releaseDate).getFullYear() : '', genre: r.primaryGenreName
         })));
       } else {
-        if (!discogsToken) { alert("Wpisz token Discogs w ustawieniach!"); return; }
+        if (!discogsToken) { alert("Missing Discogs token in settings!"); return; }
         const res = await fetch(`https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&per_page=15&token=${discogsToken}`);
         const data = await res.json();
         setResults(data.results.map((r: any) => {
@@ -91,8 +91,8 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
           </div>
           <div className="flex items-stretch bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand/50 h-16 shadow-inner">
             <div className="flex items-center justify-center pl-6 text-zinc-600"><Search size={20} /></div>
-            <input className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700" placeholder={`Szukaj albumu...`} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
-            <button onClick={search} className="px-8 bg-white hover:bg-brand text-black font-black uppercase text-[11px] tracking-widest transition-colors">{searching ? <Loader2 size={18} className="animate-spin" /> : 'Szukaj'}</button>
+            <input className="flex-1 bg-transparent px-4 outline-none text-sm font-bold text-white placeholder:text-zinc-700" placeholder="Search album..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && search()} />
+            <button onClick={search} className="px-8 bg-white hover:bg-brand text-black font-black uppercase text-[11px] tracking-widest transition-colors">{searching ? <Loader2 size={18} className="animate-spin" /> : 'Search'}</button>
           </div>
           <AnimatePresence>
             {results.length > 0 && (
@@ -118,20 +118,20 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => { if(e.target.files?.[0]) { setImageFile(e.target.files[0]); setImagePreview(URL.createObjectURL(e.target.files[0])); } }} />
             </div>
             <div className="flex-1 space-y-5">
-              <FormInput label="Wykonawca" value={form.artist} onChange={v => setForm({...form, artist: v})} />
-              <FormInput label="Tytuł" value={form.title} onChange={v => setForm({...form, title: v})} />
+              <FormInput label="Artist" value={form.artist} onChange={v => setForm({...form, artist: v})} />
+              <FormInput label="Album Title" value={form.title} onChange={v => setForm({...form, title: v})} />
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            <FormInput label="Rok" type="number" value={form.year} onChange={v => setForm({...form, year: parseInt(v)})} />
+            <FormInput label="Year" type="number" value={form.year} onChange={v => setForm({...form, year: parseInt(v)})} />
             <FormInput label="Format" value={form.format} onChange={v => setForm({...form, format: v})} />
-            <FormInput label="Ocena" type="number" value={form.rating} onChange={v => setForm({...form, rating: parseInt(v)})} />
+            <FormInput label="Rating" type="number" value={form.rating} onChange={v => setForm({...form, rating: parseInt(v)})} />
           </div>
           <div className="space-y-2 text-left">
-             <label className="text-[9px] font-black uppercase text-zinc-600 ml-1 flex items-center gap-2"><ListMusic size={12}/> Tracklista</label>
-             <textarea className="w-full bg-zinc-950 border border-white/5 rounded-2xl p-5 text-xs font-mono text-zinc-400 h-40 resize-none outline-none focus:border-brand/50 no-scrollbar" placeholder="Lista utworów..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
+             <label className="text-[9px] font-black uppercase text-zinc-600 ml-1 flex items-center gap-2"><ListMusic size={12}/> Tracklist</label>
+             <textarea className="w-full bg-zinc-950 border border-white/5 rounded-2xl p-5 text-xs font-mono text-zinc-400 h-40 resize-none outline-none focus:border-brand/50 no-scrollbar" placeholder="Paste tracks here..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
           </div>
-          <button type="submit" disabled={loading} className="w-full py-6 bg-brand text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-white active:scale-95 transition-all shadow-2xl">Zapisz w Digital Archive</button>
+          <button type="submit" disabled={loading} className="w-full py-6 bg-brand text-black rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-white active:scale-95 transition-all shadow-2xl">Archive Record</button>
         </form>
       </motion.div>
     </motion.div>
