@@ -5,7 +5,7 @@ interface ModalShellProps {
   onClose: () => void;
   onNext?: () => void;
   onPrev?: () => void;
-  onSwipeUp?: () => void; // Nowy prop dla tracklisty
+  onSwipeUp?: () => void;
   direction: number;
   albumId: string;
   isEdit: boolean;
@@ -52,27 +52,20 @@ export const ModalShell = ({
           x: { type: "spring", stiffness: 200, damping: 28 },
           opacity: { duration: 0.3 }
         }}
-        
-        // --- PRZYWRÓCONE GESTY ---
         drag={!isEdit ? true : false}
         dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={0}
         onDragEnd={(_, info) => {
           const { offset, velocity } = info;
           const threshold = 80;
-
-          // Horyzontalnie (Next/Prev)
           if (Math.abs(offset.x) > Math.abs(offset.y)) {
             if ((offset.x < -threshold || velocity.x < -500) && onNext) onNext();
             else if ((offset.x > threshold || velocity.x > 500) && onPrev) onPrev();
-          } 
-          // Wertykalnie (Zamknij / Tracklista)
-          else {
-            if (offset.y < -threshold && onSwipeUp) onSwipeUp(); // Góra
-            else if (offset.y > threshold || velocity.y > 500) onClose(); // Dół
+          } else {
+            if (offset.y < -threshold && onSwipeUp) onSwipeUp();
+            else if (offset.y > threshold || velocity.y > 500) onClose();
           }
         }}
-        
         className="bg-[#0e0e10] w-full max-w-7xl h-[92vh] rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/5 border-b-0"
         onClick={e => e.stopPropagation()}
       >

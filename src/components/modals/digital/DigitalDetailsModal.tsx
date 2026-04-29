@@ -23,7 +23,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
 
   const artists = useMemo(() => {
     const raw = album.artist || "";
-    const exceptions = ["Tyler, The Creator"];
+    const exceptions = ["Tyler, The Creator", "Earth, Wind & Fire"];
     let temp = raw;
     exceptions.forEach((ex, i) => { temp = temp.split(ex).join(`##EX${i}##`); });
     const parts = temp.split(',').map((p: string) => p.trim()).filter(Boolean);
@@ -38,7 +38,8 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
     const len = title.length;
     if (len < 12) return 'text-6xl md:text-8xl lg:text-9xl';
     if (len < 25) return 'text-5xl md:text-7xl lg:text-8xl';
-    return 'text-4xl md:text-5xl lg:text-6xl';
+    if (len < 45) return 'text-4xl md:text-5xl lg:text-6xl';
+    return 'text-3xl md:text-4xl lg:text-5xl';
   };
 
   const handleUpdate = async () => {
@@ -53,10 +54,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
 
   return (
     <ModalShell 
-      onClose={onClose} 
-      isEdit={isEdit} 
-      albumId={album.id} 
-      direction={direction}
+      onClose={onClose} isEdit={isEdit} albumId={album.id} direction={direction}
       onNext={onNext ? () => { setDirection(1); onNext(); } : undefined}
       onPrev={onPrev ? () => { setDirection(-1); onPrev(); } : undefined}
       onSwipeUp={hasTracks ? () => setShowTracks(true) : undefined}
@@ -74,7 +72,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
             </motion.div>
           ) : (
             <motion.div key="c" className="w-full h-full relative cursor-ns-resize" onClick={() => hasTracks && setShowTracks(true)}>
-              <img src={album.coverUrl} className="w-full h-full object-cover select-none" alt="" />
+              <img src={album.coverUrl} className="w-full h-full object-cover select-none pointer-events-none" alt="" />
               {!isEdit && (
                 <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/40 hover:text-brand transition-all border border-white/10 active:scale-90 shadow-2xl z-50">
                   <Edit3 size={18} />
@@ -107,7 +105,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                 <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg">Save Changes</button>
                 <div className="flex gap-3">
                   <button onClick={() => setIsEdit(false)} className="flex-1 py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase text-[10px] opacity-50">Cancel</button>
-                  <button onClick={() => { if(confirm('Delete?')) { supabase.from('albums').delete().eq('id', album.id).then(() => { onUpdateSuccess(); onClose(); })} }} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95"><Trash2 size={18}/></button>
+                  <button onClick={() => { if(confirm('Delete album?')) { supabase.from('albums').delete().eq('id', album.id).then(() => { onUpdateSuccess(); onClose(); })} }} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95 flex items-center justify-center"><Trash2 size={18}/></button>
                 </div>
               </div>
             </motion.div>
@@ -128,7 +126,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                 </div>
               </header>
 
-              {/* SECTION: DATA & ACTIONS (Anchored to bottom) */}
               <div className="space-y-8">
                 <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
                   <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
@@ -142,8 +139,14 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <ActionButton icon={<Play size={16} fill="black"/>} text="Spotify" primary onClick={() => window.open(`spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
-                  <ActionButton icon={<MonitorPlay size={16}/>} text="YouTube" onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`)} />
+                  <ActionButton 
+                    icon={<Play size={16} fill="black"/>} text="Spotify" primary 
+                    onClick={() => { window.location.href = `spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`; }} 
+                  />
+                  <ActionButton 
+                    icon={<MonitorPlay size={16}/>} text="YouTube" 
+                    onClick={() => { window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(album.artist + ' ' + album.title)}`, '_blank', 'noopener,noreferrer'); }} 
+                  />
                 </div>
               </div>
             </motion.div>
@@ -154,7 +157,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   );
 };
 
-// MINI COMPONENTS (remain the same)
 const Badge = ({ icon, text, brand, colorClass }: any) => (
   <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all
     ${colorClass ? colorClass : (brand ? 'bg-brand text-black shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5 shadow-black/20')}
@@ -162,14 +164,16 @@ const Badge = ({ icon, text, brand, colorClass }: any) => (
     {icon} {text}
   </span>
 );
+
 const ActionButton = ({ icon, text, primary, onClick }: any) => (
   <button onClick={onClick} className={`py-4 rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.1em] flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl ${primary ? 'bg-white text-black hover:bg-brand' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>
     {icon} {text}
   </button>
 );
+
 const FormInput = ({ label, value, onChange, type = "text" }: any) => (
   <div className="space-y-1 text-left">
     <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">{label}</label>
-    <input type={type} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all" value={value} onChange={e => onChange(e.target.value)} />
+    <input type={type} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm font-bold text-white outline-none focus:border-brand/50 transition-all shadow-inner" value={value} onChange={e => onChange(e.target.value)} />
   </div>
 );
