@@ -6,7 +6,6 @@ import {
   ChevronRight, Disc, BookmarkCheck, Search
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import type { Album } from '../../../types/album';
 
 export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, onNext, onPrev }: any) => {
   const [isEdit, setIsEdit] = useState(false);
@@ -21,6 +20,15 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
     setShowTracks(false);
     setDirection(0);
   }, [album]);
+
+  // --- LOGIKA DYNAMICZNEJ CZCIONKI ---
+  const getFontSize = (title: string) => {
+    const len = title.length;
+    if (len < 12) return 'text-6xl md:text-8xl lg:text-9xl'; // Bardzo krótkie
+    if (len < 25) return 'text-5xl md:text-7xl lg:text-8xl'; // Standardowe
+    if (len < 45) return 'text-4xl md:text-5xl lg:text-6xl'; // Dłuższe
+    return 'text-3xl md:text-4xl lg:text-5xl'; // Ekstremalnie długie
+  };
 
   const handleUpdate = async () => {
     setLoading(true);
@@ -41,7 +49,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   const hasTracks = album.tracks && album.tracks.trim().length > 0;
   const paginate = (d: number, action: () => void) => { setDirection(d); action(); };
 
-  // Refined variants for smoother motion
   const panelVariants = {
     enter: (d: number) => ({
       x: d > 0 ? 150 : (d < 0 ? -150 : 0),
@@ -49,12 +56,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
       opacity: 0,
       filter: 'blur(10px)'
     }),
-    center: {
-      x: 0,
-      y: 0,
-      opacity: 1,
-      filter: 'blur(0px)'
-    },
+    center: { x: 0, y: 0, opacity: 1, filter: 'blur(0px)' },
     exit: (d: number) => ({
       x: d < 0 ? 150 : (d > 0 ? -150 : 0),
       opacity: 0,
@@ -79,15 +81,12 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
         key={album.id}
         custom={direction}
         variants={panelVariants}
-        initial="enter"
-        animate="center"
-        exit="exit"
+        initial="enter" animate="center" exit="exit"
         transition={{ 
-          x: { type: "spring", stiffness: 200, damping: 28 }, // More "fluid" feel
+          x: { type: "spring", stiffness: 200, damping: 28 },
           opacity: { duration: 0.3 },
           y: { type: "spring", stiffness: 300, damping: 30 }
         }}
-        
         drag={!isEdit ? true : false}
         dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={0}
@@ -102,7 +101,6 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
             else if (offset.y > swipeThreshold || velocity.y > 400) onClose();
           }
         }}
-        
         className="bg-[#0e0e10] w-full max-w-7xl h-[92vh] rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/5 border-b-0"
         onClick={e => e.stopPropagation()}
       >
@@ -113,7 +111,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               <motion.div key="t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 p-8 overflow-y-auto bg-black/95 z-20 no-scrollbar text-left pb-32">
                 <div className="flex items-center justify-between mb-8 sticky top-0 bg-black/10 py-2">
                   <h4 className="text-brand text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2"><ListMusic size={14}/> Tracks</h4>
-                  <button onClick={() => setShowTracks(false)} className="p-2 bg-white/5 rounded-full hover:bg-brand hover:text-black transition-colors"><ChevronDown size={16}/></button>
+                  <button onClick={() => setShowTracks(false)} className="p-2 bg-white/5 rounded-full hover:bg-brand transition-colors"><ChevronDown size={16}/></button>
                 </div>
                 <pre className="text-zinc-500 font-mono text-[11px] md:text-[13px] whitespace-pre-wrap leading-relaxed">{album.tracks}</pre>
               </motion.div>
@@ -121,7 +119,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               <motion.div key="c" className="w-full h-full relative" onClick={() => hasTracks && setShowTracks(true)}>
                 <img src={album.coverUrl} className="w-full h-full object-cover pointer-events-none select-none" alt="" />
                 {!isEdit && (
-                  <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/40 hover:text-brand hover:bg-black transition-all border border-white/10 active:scale-90 shadow-2xl">
+                  <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-6 left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/40 hover:text-brand transition-all border border-white/10 active:scale-90 shadow-2xl">
                     <Edit3 size={18} />
                   </button>
                 )}
@@ -136,7 +134,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
           <button onClick={onClose} className="absolute top-6 left-6 p-4 bg-black/40 hover:bg-white hover:text-black transition-all rounded-full z-30"><X size={20} /></button>
         </div>
 
-        {/* RIGHT: INFO */}
+        {/* RIGHT: DATA */}
         <div className="p-8 md:p-14 lg:p-20 flex-1 flex flex-col justify-between bg-gradient-to-br from-[#0e0e10] to-black min-h-0 overflow-hidden">
           <AnimatePresence mode="wait">
             {isEdit ? (
@@ -150,35 +148,32 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                     </div>
                  </div>
                  <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
-                    <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg shadow-brand/10">Save Changes</button>
+                    <button onClick={handleUpdate} className="w-full py-5 bg-brand text-black rounded-2xl font-black uppercase text-xs active:scale-95 transition-all shadow-lg shadow-brand/10 text-center">Save Changes</button>
                     <div className="flex gap-3">
                       <button onClick={() => setIsEdit(false)} className="flex-1 py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase text-[10px] opacity-50">Cancel</button>
-                      <button onClick={handleDelete} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95"><Trash2 size={18}/></button>
+                      <button onClick={handleDelete} className="px-6 py-4 bg-red-900/20 text-red-500 rounded-2xl hover:bg-red-900/40 transition-all active:scale-95 flex items-center justify-center"><Trash2 size={18}/></button>
                     </div>
                  </div>
               </motion.div>
             ) : (
               <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col justify-between text-left">
                 <header>
-                  <button onClick={() => onArtistClick(album.artist)} className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors mb-2">{album.artist}</button>
-                  <h2 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase italic tracking-tighter leading-[0.85] text-white line-clamp-3">
+                  <button onClick={() => onArtistClick(album.artist)} className="text-brand font-black uppercase text-[12px] tracking-tighter italic hover:text-white transition-colors mb-4">{album.artist}</button>
+                  {/* TUTAJ DZIAŁA DYNAMICZNA CZCIONKA */}
+                  <h2 className={`${getFontSize(album.title)} font-black uppercase italic tracking-tighter leading-[0.85] text-white line-clamp-4 transition-all duration-300`}>
                     {album.title}
                   </h2>
                 </header>
 
                 <div className="space-y-10">
-                  {/* METADATA BAR WITH STATUS BADGE */}
                   <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
                     <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
                     <Badge icon={<Disc size={12}/>} text={album.format} brand />
-                    
-                    {/* Status Badge: Owned / Wanted */}
                     <Badge 
                       icon={album.status === 'MAM' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
                       text={album.status === 'MAM' ? 'OWNED' : 'WANTED'} 
                       colorClass={album.status === 'MAM' ? 'bg-brand text-black shadow-brand/20' : 'bg-orange-500 text-black shadow-orange-500/20'}
                     />
-
                     {Number(album.rating) > 0 && <Badge icon={<Star size={12} fill="currentColor"/>} text={`${album.rating}/10`} brand />}
                   </div>
                   
