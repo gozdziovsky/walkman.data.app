@@ -138,9 +138,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
             className="flex flex-col md:flex-row w-full h-full relative"
           >
             
-            {/* ========================================================= */}
-            {/* TRACKLIST OVERLAY                                         */}
-            {/* ========================================================= */}
+            {/* TRACKLIST OVERLAY */}
             <AnimatePresence>
               {showTracks && !isEdit && (
                 <motion.div 
@@ -277,6 +275,23 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col justify-between no-scrollbar p-6 md:p-14 lg:p-20 text-left relative min-h-0">
+                  
+                  {/* Znaczki ułożone klasycznie na górze panelu z danymi, usunięty overlapping */}
+                  <div className="flex flex-row justify-between md:justify-start gap-4 mb-6 z-50">
+                    <Badge 
+                      icon={<Search size={12}/>} 
+                      text={album.format} 
+                      brand 
+                      className="shadow-xl" 
+                    />
+                    <Badge 
+                      icon={displayStatus === 'OWNED' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
+                      text={displayStatus === 'OWNED' ? 'OWNED' : 'WANTED'} 
+                      colorClass={displayStatus === 'OWNED' ? 'bg-brand text-black' : 'bg-orange-500 text-black'}
+                      className="shadow-xl"
+                    />
+                  </div>
+
                   <header className="flex-1 flex flex-col justify-center pr-12 md:pr-0 min-h-0">
                     <div className="flex flex-wrap gap-x-2 gap-y-1 mb-2">
                       {artists.map((name, i) => (
@@ -294,25 +309,15 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
 
                   <div className="shrink-0 flex flex-col gap-3 md:gap-6 border-t border-white/5 pt-4 md:pt-6 cursor-default">
                     
-                    {/* Wiersz 1: Rok Wydania (Lewo) / Gatunek (Prawo) */}
+                    {/* Wiersz z rokiem i gatunkiem */}
                     <div className="flex flex-wrap gap-2 w-full">
                       <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
                       {Number(album.rating) > 0 && <Badge icon={<Star size={12} fill="currentColor"/>} text={`${album.rating}/10`} brand />}
                       {album.genre && <Badge icon={<Disc size={12}/>} text={album.genre} className="ml-auto" />}
                     </div>
-
-                    {/* Wiersz 2: Format (Lewo) / Status (Prawo) */}
-                    <div className="flex flex-wrap gap-2 w-full">
-                      <Badge icon={<Search size={12}/>} text={album.format} brand />
-                      <Badge 
-                        icon={displayStatus === 'OWNED' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
-                        text={displayStatus === 'OWNED' ? 'OWNED' : 'WANTED'} 
-                        colorClass={displayStatus === 'OWNED' ? 'bg-brand text-black shadow-brand/20' : 'bg-orange-500 text-black shadow-orange-500/20'}
-                        className="ml-auto"
-                      />
-                    </div>
                     
-                    <div className="grid grid-cols-2 gap-2 md:gap-3 pb-2 md:pb-0">
+                    {/* Przyciski odtwarzania */}
+                    <div className="grid grid-cols-2 gap-2 md:gap-3 pb-2 md:pb-0 pt-2">
                       <ActionButton 
                         icon={<Play size={14} fill="black"/>} text="Spotify" primary 
                         onClick={() => { window.location.href = `spotify:search:${encodeURIComponent(album.artist + ' ' + album.title)}`; }} 
@@ -333,7 +338,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   );
 };
 
-// MINI COMPONENTS - Zaktualizowane o parametr className
+// MINI COMPONENTS 
 const Badge = ({ icon, text, brand, colorClass, className = '' }: any) => (
   <span className={`px-3 py-1.5 md:px-4 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-2 shadow-lg transition-all shrink-0
     ${colorClass ? colorClass : (brand ? 'bg-brand text-black shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5 shadow-black/20')}
