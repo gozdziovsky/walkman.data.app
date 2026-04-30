@@ -15,6 +15,15 @@ const getOptimizedCover = (url: string, quality: 'grid' | 'full') => {
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=400&h=400&fit=cover&output=webp&q=80`;
 };
 
+// Funkcje pomocnicze do obsługi localStorage z unikalnym prefiksem dla danego archiwum
+const getSavedState = (key: string, defaultValue: string, tableName: string) => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(`${tableName}_${key}`);
+    if (saved !== null) return saved;
+  }
+  return defaultValue;
+};
+
 export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, formats, AddModal, DetailsModal }: any) => {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,10 +32,18 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
   const [showSettings, setShowSettings] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  const [filterFormat, setFilterFormat] = useState('ALL');
-  const [filterStatus, setFilterStatus] = useState('ALL');
-  const [sortBy, setSortBy] = useState('artist_asc'); // <-- NOWY STAN SORTOWANIA
+  // Inicjalizacja stanów z localStorage (lub wartości domyślnych, jeśli brak)
+  const [filterFormat, setFilterFormat] = useState(() => getSavedState('filterFormat', 'ALL', tableName));
+  const [filterStatus, setFilterStatus] = useState(() => getSavedState('filterStatus', 'ALL', tableName));
+  const [sortBy, setSortBy] = useState(() => getSavedState('sortBy', 'artist_asc', tableName)); 
   
+  // Zapisywanie ustawień filtrów/sortowania w localStorage przy każdej zmianie
+  useEffect(() => {
+    localStorage.setItem(`${tableName}_filterFormat`, filterFormat);
+    localStorage.setItem(`${tableName}_filterStatus`, filterStatus);
+    localStorage.setItem(`${tableName}_sortBy`, sortBy);
+  }, [filterFormat, filterStatus, sortBy, tableName]);
+
   // Stany globalne pobierane z systemu
   const [cols, setCols] = useState(() => parseInt(localStorage.getItem('walkman_cols') || '3'));
   const [showNav, setShowNav] = useState(() => localStorage.getItem('show_nav') !== 'false');
@@ -51,7 +68,6 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
 
   useEffect(() => { fetchAlbums(); }, [tableName]);
 
-  // --- INTELIGENTNY SILNIK FILTROWANIA I SORTOWANIA ---
   const processedAlbums = useMemo(() => {
     let result = [...albums];
     
@@ -103,7 +119,6 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
     if (node) observer.current.observe(node);
   }, [visibleCount, processedAlbums.length]);
 
-  // Resetujemy limit przy zmianie filtrów/sortowania
   useEffect(() => { setVisibleCount(40); }, [searchTerm, filterFormat, filterStatus, sortBy, tableName]);
 
   const currentIndex = useMemo(() => 
@@ -140,7 +155,7 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
           <div className="flex items-center gap-1 mr-2 shrink-0">
             <button onClick={() => setShowFilters(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90 relative">
               <Filter size={18} />
-              {(filterFormat !== 'ALL' || filterStatus !== 'ALL') && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-brand rounded-full border-2 border-[#09090b]" />}
+              {(filterFormat !== 'ALL' || filterStatus !== 'ALL' || sortBy !== 'artist_asc') && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-brand rounded-full border-2 border-[#09090b]" />}
             </button>
             <button onClick={() => setShowSettings(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90">
               <Settings2 size={18} />
@@ -148,47 +163,29 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
           </div>
         </div>
 
-        {/* SEARCH BAR & SORTING DROPDOWN */}
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="relative group flex-1">
-            <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-brand transition-colors" size={14} />
-            <input 
-              type="text" 
-              placeholder="Search collection..." 
-              className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none focus:bg-zinc-900/60 focus:border-brand/30 transition-all" 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
-            />
-            <AnimatePresence>
-              {searchTerm && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white transition-colors"
-                >
-                  <X size={16} strokeWidth={3} />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="relative flex items-center bg-zinc-900/30 border border-white/5 rounded-[1.5rem] px-4 py-4 md:py-0 hover:bg-zinc-900/60 focus-within:border-brand/30 transition-all shrink-0">
-            <ArrowUpDown size={14} className="text-zinc-600 absolute left-4 pointer-events-none" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-300 outline-none cursor-pointer appearance-none pl-6 pr-2 w-full md:w-auto h-full"
-            >
-              <option value="artist_asc" className="bg-zinc-900 text-white">Artist: A-Z</option>
-              <option value="artist_desc" className="bg-zinc-900 text-white">Artist: Z-A</option>
-              <option value="title_asc" className="bg-zinc-900 text-white">Title: A-Z</option>
-              <option value="title_desc" className="bg-zinc-900 text-white">Title: Z-A</option>
-              <option value="year_desc" className="bg-zinc-900 text-white">Newest First</option>
-              <option value="year_asc" className="bg-zinc-900 text-white">Oldest First</option>
-            </select>
-          </div>
+        {/* CZYSTY SEARCH BAR */}
+        <div className="relative group">
+          <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-brand transition-colors" size={14} />
+          <input 
+            type="text" 
+            placeholder="Search collection..." 
+            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none focus:bg-zinc-900/60 focus:border-brand/30 transition-all" 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+          />
+          <AnimatePresence>
+            {searchTerm && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                onClick={() => setSearchTerm('')}
+                className="absolute right-5 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white transition-colors"
+              >
+                <X size={16} strokeWidth={3} />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
@@ -243,9 +240,22 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowFilters(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[210]" />
             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[220] shadow-2xl text-left transform-gpu will-change-transform">
+className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t border-white/10 p-8 pt-10 z-[220] shadow-2xl text-left transform-gpu will-change-transform max-h-[85vh] overflow-y-auto no-scrollbar">
               <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-10" />
               
+              {/* NOWA SEKCJA SORTOWANIA */}
+              <section className="mb-10 max-w-lg mx-auto">
+                 <FilterLabel icon={<ArrowUpDown size={14}/>} title="Sort By" />
+                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-4">
+                   <FilterBtn label="Artist: A-Z" active={sortBy === 'artist_asc'} onClick={() => setSortBy('artist_asc')} />
+                   <FilterBtn label="Artist: Z-A" active={sortBy === 'artist_desc'} onClick={() => setSortBy('artist_desc')} />
+                   <FilterBtn label="Title: A-Z" active={sortBy === 'title_asc'} onClick={() => setSortBy('title_asc')} />
+                   <FilterBtn label="Title: Z-A" active={sortBy === 'title_desc'} onClick={() => setSortBy('title_desc')} />
+                   <FilterBtn label="Newest" active={sortBy === 'year_desc'} onClick={() => setSortBy('year_desc')} />
+                   <FilterBtn label="Oldest" active={sortBy === 'year_asc'} onClick={() => setSortBy('year_asc')} />
+                 </div>
+              </section>
+
               <section className="mb-10 max-w-lg mx-auto">
                  <FilterLabel icon={<BookmarkCheck size={14}/>} title="Library Status" />
                  <div className="grid grid-cols-3 gap-3 px-4">
@@ -299,7 +309,7 @@ const StatBox = ({ label, val, colorClass, active, onClick }: any) => (
 );
 
 const FilterBtn = ({ label, active, onClick, activeClass = 'bg-white text-black' }: any) => (
-  <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${active ? activeClass : 'bg-white/5 text-zinc-500 border-white/5'}`}>{label}</button>
+  <button onClick={onClick} className={`py-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border flex items-center justify-center text-center ${active ? activeClass : 'bg-white/5 text-zinc-500 border-white/5 hover:bg-white/10'}`}>{label}</button>
 );
 
 const FilterLabel = ({ icon, title }: any) => (
