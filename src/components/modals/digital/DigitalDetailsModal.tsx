@@ -135,89 +135,89 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
               if (offset.x < -60 && onNext) { setDirection(1); onNext(); }
               else if (offset.x > 60 && onPrev) { setDirection(-1); onPrev(); }
             }}
-            className="flex flex-col md:flex-row w-full h-full"
+            className="flex flex-col md:flex-row w-full h-full relative"
           >
             
+            {/* ========================================================= */}
+            {/* TRACKLIST OVERLAY (Pełny ekran na mobile, połowa na PC)   */}
+            {/* ========================================================= */}
+            <AnimatePresence>
+              {showTracks && !isEdit && (
+                <motion.div 
+                  initial={{ opacity: 0, y: "10%" }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: "10%" }} 
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} 
+                  drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
+                  onDragEnd={(e, { offset }) => { if (offset.y > 60) setShowTracks(false); }}
+                  className="absolute inset-0 md:right-auto md:w-1/2 p-6 md:p-8 overflow-y-auto bg-black/80 backdrop-blur-3xl z-[80] no-scrollbar text-left pb-32 border-r border-white/5 shadow-[20px_0_50px_rgba(0,0,0,0.5)]"
+                >
+                  <div className="flex items-center justify-between mb-6 sticky top-0 bg-transparent py-2 z-30">
+                    <h4 className="text-brand text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 drop-shadow-md"><ListMusic size={14}/> Tracks</h4>
+                    <button onClick={() => setShowTracks(false)} className="p-2 bg-white/10 rounded-full hover:bg-brand hover:text-black transition-colors backdrop-blur-md"><ChevronDown size={16}/></button>
+                  </div>
+                  
+                  <div className="space-y-0.5 pb-6">
+                    {parsedTracks.map((track: any, idx: number) => {
+                      if (track.isHeader) {
+                        return (
+                          <div key={idx} className="mt-8 mb-4 first:mt-0 px-2 flex items-center gap-3">
+                            <div className="p-1.5 bg-brand/10 rounded-lg">
+                              <Disc size={12} className="text-brand"/>
+                            </div>
+                            <span className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-brand">{track.title}</span>
+                            <div className="flex-1 h-px bg-gradient-to-r from-brand/20 to-transparent ml-2 rounded-full"></div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={idx} className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors group cursor-default">
+                          <div className="w-5 relative flex justify-end shrink-0">
+                            <span className="text-[10px] md:text-[11px] font-black text-zinc-500 group-hover:opacity-0 transition-opacity tabular-nums">
+                              {track.num}
+                            </span>
+                            <Play size={10} className="absolute opacity-0 group-hover:opacity-100 text-brand top-1/2 -translate-y-1/2 right-0 transition-opacity" fill="currentColor" />
+                          </div>
+                          
+                          <span className="text-[11px] md:text-[12px] font-bold text-zinc-200 group-hover:text-white transition-colors truncate flex-1">
+                            {track.title}
+                          </span>
+                          
+                          {track.duration && (
+                            <span className="text-[9px] md:text-[10px] font-mono text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0">
+                              {track.duration}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* LEFT: MEDIA SECTION */}
             {!isEdit && (
               <div className="w-full md:w-1/2 aspect-square md:aspect-auto md:h-full relative bg-zinc-950 shrink-0 group border-b md:border-b-0 md:border-r border-white/5 overflow-hidden">
-                <AnimatePresence mode="wait">
-                  {showTracks ? (
-                    <motion.div 
-                      key="t" 
-                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} 
-                      transition={{ duration: 0.3 }} 
-                      drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
-                      onDragEnd={(e, { offset }) => { if (offset.y > 40) setShowTracks(false); }}
-                      className="absolute inset-0 p-6 md:p-8 overflow-y-auto bg-black/95 z-20 no-scrollbar text-left pb-32"
-                    >
-                      <div className="flex items-center justify-between mb-6 sticky top-0 bg-black/10 py-2 backdrop-blur-sm z-30">
-                        <h4 className="text-brand text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2"><ListMusic size={14}/> Tracks</h4>
-                        <button onClick={() => setShowTracks(false)} className="p-2 bg-white/5 rounded-full hover:bg-brand hover:text-black transition-colors"><ChevronDown size={16}/></button>
-                      </div>
-                      
-                      {/* LIFTING UI TRACKLISTY */}
-                      <div className="space-y-1 pb-6">
-                        {parsedTracks.map((track: any, idx: number) => {
-                          // Wygląd nagłówka (Side A, CD 1 itp.)
-                          if (track.isHeader) {
-                            return (
-                              <div key={idx} className="mt-8 mb-4 first:mt-0 px-2 flex items-center gap-3">
-                                <div className="p-1.5 bg-brand/10 rounded-lg">
-                                  <Disc size={12} className="text-brand"/>
-                                </div>
-                                <span className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-brand">{track.title}</span>
-                                <div className="flex-1 h-px bg-gradient-to-r from-brand/20 to-transparent ml-2 rounded-full"></div>
-                              </div>
-                            );
-                          }
-
-                          // Wygląd pojedynczego utworu (z hoverem typu Spotify)
-                          return (
-                            <div key={idx} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-default">
-                              <div className="w-5 relative flex justify-end shrink-0">
-                                <span className="text-[10px] md:text-[11px] font-black text-zinc-600 group-hover:opacity-0 transition-opacity tabular-nums">
-                                  {track.num}
-                                </span>
-                                <Play size={10} className="absolute opacity-0 group-hover:opacity-100 text-brand top-1/2 -translate-y-1/2 right-0 transition-opacity" fill="currentColor" />
-                              </div>
-                              
-                              <span className="text-[11px] md:text-[12px] font-bold text-zinc-300 group-hover:text-white transition-colors truncate flex-1">
-                                {track.title}
-                              </span>
-                              
-                              {track.duration && (
-                                <span className="text-[9px] md:text-[10px] font-mono text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0">
-                                  {track.duration}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div 
-                      key="c" 
-                      className="w-full h-full relative cursor-pointer" 
-                      onClick={() => hasTracks && setShowTracks(true)}
-                      drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
-                      onDragEnd={(e, { offset }) => { if (offset.y < -40 && hasTracks) setShowTracks(true); }}
-                    >
-                      <img src={album.coverUrl} className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105" alt="" />
-                      <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-4 left-4 md:bottom-6 md:left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/50 hover:text-brand transition-all border border-white/10 active:scale-90 shadow-2xl z-50 hover:border-brand/30">
-                        <Edit3 size={18} />
-                      </button>
-                      {hasTracks && (
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50 group-hover:opacity-100 transition-opacity animate-bounce">
-                          <ChevronUp size={24} className="drop-shadow-lg" /><span className="text-[9px] font-black uppercase tracking-widest drop-shadow-lg">Tracks</span>
-                        </div>
-                      )}
-                    </motion.div>
+                <motion.div 
+                  className="w-full h-full relative cursor-pointer" 
+                  onClick={() => hasTracks && setShowTracks(true)}
+                  drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
+                  onDragEnd={(e, { offset }) => { if (offset.y < -40 && hasTracks) setShowTracks(true); }}
+                >
+                  <img src={album.coverUrl} className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-105" alt="" />
+                  <button onClick={(e) => { e.stopPropagation(); setIsEdit(true); }} className="absolute bottom-4 left-4 md:bottom-6 md:left-6 p-4 bg-black/60 backdrop-blur-md rounded-2xl text-white/50 hover:text-brand transition-all border border-white/10 active:scale-90 shadow-2xl z-50 hover:border-brand/30">
+                    <Edit3 size={18} />
+                  </button>
+                  {hasTracks && !showTracks && (
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50 group-hover:opacity-100 transition-opacity animate-bounce">
+                      <ChevronUp size={24} className="drop-shadow-lg" /><span className="text-[9px] font-black uppercase tracking-widest drop-shadow-lg">Tracks</span>
+                    </div>
                   )}
-                </AnimatePresence>
+                </motion.div>
               </div>
             )}
 
+            {/* RIGHT: DATA & EDIT SECTION */}
             <div className={`flex-1 flex flex-col min-h-0 bg-gradient-to-br from-[#0e0e10] to-black relative ${isEdit ? 'w-full' : ''}`}>
               
               {isEdit ? (
