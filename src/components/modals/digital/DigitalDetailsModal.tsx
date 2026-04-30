@@ -139,7 +139,7 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
           >
             
             {/* ========================================================= */}
-            {/* TRACKLIST OVERLAY (Pełny ekran na mobile, połowa na PC)   */}
+            {/* TRACKLIST OVERLAY                                         */}
             {/* ========================================================= */}
             <AnimatePresence>
               {showTracks && !isEdit && (
@@ -293,18 +293,22 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                   </header>
 
                   <div className="shrink-0 flex flex-col gap-3 md:gap-6 border-t border-white/5 pt-4 md:pt-6 cursor-default">
-                    <div className="flex flex-wrap gap-2">
+                    
+                    {/* Wiersz 1: Rok Wydania (Lewo) / Gatunek (Prawo) */}
+                    <div className="flex flex-wrap gap-2 w-full">
                       <Badge icon={<Calendar size={12}/>} text={album.year?.toString() || '—'} />
-                      {album.genre && <Badge icon={<Disc size={12}/>} text={album.genre} />}
                       {Number(album.rating) > 0 && <Badge icon={<Star size={12} fill="currentColor"/>} text={`${album.rating}/10`} brand />}
+                      {album.genre && <Badge icon={<Disc size={12}/>} text={album.genre} className="ml-auto" />}
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    {/* Wiersz 2: Format (Lewo) / Status (Prawo) */}
+                    <div className="flex flex-wrap gap-2 w-full">
                       <Badge icon={<Search size={12}/>} text={album.format} brand />
                       <Badge 
                         icon={displayStatus === 'OWNED' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
                         text={displayStatus === 'OWNED' ? 'OWNED' : 'WANTED'} 
                         colorClass={displayStatus === 'OWNED' ? 'bg-brand text-black shadow-brand/20' : 'bg-orange-500 text-black shadow-orange-500/20'}
+                        className="ml-auto"
                       />
                     </div>
                     
@@ -329,10 +333,11 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
   );
 };
 
-// MINI COMPONENTS
-const Badge = ({ icon, text, brand, colorClass }: any) => (
+// MINI COMPONENTS - Zaktualizowane o parametr className
+const Badge = ({ icon, text, brand, colorClass, className = '' }: any) => (
   <span className={`px-3 py-1.5 md:px-4 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 md:gap-2 shadow-lg transition-all shrink-0
     ${colorClass ? colorClass : (brand ? 'bg-brand text-black shadow-brand/10' : 'bg-white/5 text-zinc-500 border border-white/5 shadow-black/20')}
+    ${className}
   `}>
     {icon} {text}
   </span>
