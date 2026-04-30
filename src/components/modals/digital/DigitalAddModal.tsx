@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Image as ImageIcon, Loader2, Search, ListMusic } from 'lucide-react';
+import { BookmarkCheck, X, Image as ImageIcon, Loader2, Search, ListMusic } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', discogsToken }: any) => {
@@ -82,9 +82,7 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
         initial={{ y: "100%" }} 
         animate={{ y: 0 }} 
         exit={{ y: "100%" }}
-        // Zastosowanie płynnej krzywej Apple:
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        // Dodanie akceleracji GPU:
         className="bg-zinc-900 w-full max-w-3xl rounded-t-[2.5rem] md:rounded-[3.5rem] p-8 md:p-12 overflow-y-auto max-h-[95vh] border-t border-white/10 shadow-2xl no-scrollbar relative transform-gpu will-change-transform" 
         onClick={e => e.stopPropagation()}
       >
@@ -131,11 +129,36 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
               <FormInput label="Album Title" value={form.title} onChange={v => setForm({...form, title: v})} />
             </div>
           </div>
+          
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <FormInput label="Year" type="number" value={form.year} onChange={v => setForm({...form, year: parseInt(v)})} />
             <FormInput label="Format" value={form.format} onChange={v => setForm({...form, format: v})} />
             <FormInput label="Rating" type="number" value={form.rating} onChange={v => setForm({...form, rating: parseInt(v)})} />
           </div>
+
+          {/* DODANY SWITCH STATUSU */}
+          <div className="space-y-2 text-left">
+            <label className="text-[9px] font-black uppercase text-zinc-600 ml-1 flex items-center gap-2">
+              <BookmarkCheck size={12}/> Library Status
+            </label>
+            <div className="flex gap-2 p-1.5 bg-zinc-950 border border-white/5 rounded-2xl shadow-inner">
+              <button 
+                type="button" 
+                onClick={() => setForm({...form, status: 'OWNED'})} 
+                className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${form.status === 'OWNED' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600 hover:text-white'}`}
+              >
+                Owned
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setForm({...form, status: 'WANTED'})} 
+                className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${form.status === 'WANTED' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-zinc-600 hover:text-white'}`}
+              >
+                Wanted
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-2 text-left">
              <label className="text-[9px] font-black uppercase text-zinc-600 ml-1 flex items-center gap-2"><ListMusic size={12}/> Tracklist</label>
              <textarea className="w-full bg-zinc-950 border border-white/5 rounded-2xl p-5 text-xs font-mono text-zinc-400 h-40 resize-none outline-none focus:border-brand/50 no-scrollbar" placeholder="Paste tracks here..." value={form.tracks} onChange={e => setForm({...form, tracks: e.target.value})} />
