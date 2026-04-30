@@ -5,6 +5,7 @@
     background-color: #09090b;
     color: #ffffff;
     touch-action: manipulation;
+    /* Usunięcie domyślnego szarego podświetlenia przeglądarki przy "tapnięciu" w ekran */
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -19,11 +20,32 @@
     -ms-overflow-style: none;
   }
 
+  body {
+    /* Globalna blokada zaznaczania tekstu (zapobiega lupom i niebieskiemu tłu) */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    
+    /* Blokada wyskakującego menu kontekstowego (Zapisz obraz itp.) na iOS po przytrzymaniu palcem */
+    -webkit-touch-callout: none;
+  }
+
   *::-webkit-scrollbar {
     display: none;
   }
 
+  /* CHIRURGICZNY WYJĄTEK: Przywrócenie działania formularzy + Twoje powiększenie czcionki */
   input, select, textarea {
     font-size: 16px !important;
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    -ms-user-select: auto;
+    user-select: auto;
+  }
+
+  /* Globalna blokada przeciągania obrazków do innej karty / na pulpit (Drag & Drop) */
+  img {
+    -webkit-user-drag: none;
   }
 }
