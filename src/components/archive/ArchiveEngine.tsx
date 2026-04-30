@@ -82,8 +82,8 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
 
   const stats = useMemo(() => ({
     total: albums.length,
-    owned: albums.filter(a => a.status === 'MAM').length,
-    wanted: albums.filter(a => a.status === 'SZUKAM').length,
+    owned: albums.filter(a => a.status === 'OWNED').length,
+    wanted: albums.filter(a => a.status === 'WANTED').length,
   }), [albums]);
 
   const discogsToken = localStorage.getItem('discogs_token') || '';
@@ -108,8 +108,8 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
         <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-2 pl-4 shadow-2xl">
           <div className="flex gap-1 overflow-x-auto no-scrollbar items-center">
             <StatBox label="Total" val={stats.total} active={filterStatus === 'ALL'} onClick={() => setFilterStatus('ALL')} />
-            <StatBox label="Owned" val={stats.owned} colorClass="text-brand" active={filterStatus === 'MAM'} onClick={() => setFilterStatus('MAM')} />
-            <StatBox label="Wanted" val={stats.wanted} colorClass="text-orange-500" active={filterStatus === 'SZUKAM'} onClick={() => setFilterStatus('SZUKAM')} />
+            <StatBox label="Owned" val={stats.owned} colorClass="text-brand" active={filterStatus === 'OWNED'} onClick={() => setFilterStatus('OWNED')} />
+            <StatBox label="Wanted" val={stats.wanted} colorClass="text-orange-500" active={filterStatus === 'WANTED'} onClick={() => setFilterStatus('WANTED')} />
           </div>
           <div className="flex items-center gap-1 mr-2 shrink-0">
             <button onClick={() => setShowFilters(true)} className="p-3 rounded-full bg-zinc-900/50 text-zinc-500 hover:text-white transition-all active:scale-90 relative">
@@ -178,7 +178,7 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
                     <ListMusic size={10} className="absolute top-1.5 left-1.5 text-white/90" />
                   </div>
                 )}
-                <div className={`absolute top-0 right-0 w-7 h-7 z-10 ${album.status === 'MAM' ? 'bg-brand' : 'bg-orange-500'}`} style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }} />
+                <div className={`absolute top-0 right-0 w-7 h-7 z-10 ${album.status === 'OWNED' ? 'bg-brand' : 'bg-orange-500'}`} style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }} />
               </motion.div>
             ))}
           </motion.div>
@@ -206,8 +206,8 @@ className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-[3rem] border-t b
                  <FilterLabel icon={<BookmarkCheck size={14}/>} title="Library Status" />
                  <div className="grid grid-cols-3 gap-3 px-4">
                    <FilterBtn label="ALL" active={filterStatus === 'ALL'} onClick={() => setFilterStatus('ALL')} />
-                   <FilterBtn label="OWNED" active={filterStatus === 'MAM'} onClick={() => setFilterStatus('MAM')} activeClass="bg-brand text-black" />
-                   <FilterBtn label="WISH" active={filterStatus === 'SZUKAM'} onClick={() => setFilterStatus('SZUKAM')} activeClass="bg-orange-500 text-black border-orange-500" />
+                   <FilterBtn label="OWNED" active={filterStatus === 'OWNED'} onClick={() => setFilterStatus('OWNED')} activeClass="bg-brand text-black" />
+                   <FilterBtn label="WISH" active={filterStatus === 'WANTED'} onClick={() => setFilterStatus('WANTED')} activeClass="bg-orange-500 text-black border-orange-500" />
                  </div>
               </section>
 

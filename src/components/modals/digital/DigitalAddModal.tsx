@@ -16,7 +16,7 @@ export const DigitalAddModal = ({ onClose, onSuccess, searchSource = 'itunes', d
   const [form, setForm] = useState({
     artist: '', title: '', coverUrl: '', genre: '',
     year: new Date().getFullYear(), format: 'FLAC', 
-    status: 'MAM' as 'MAM' | 'SZUKAM', rating: 0, 
+    status: 'OWNED' as 'OWNED' | 'WANTED', rating: 0, 
     spotify_url: '', youtube_url: '', tracks: ''
   });
 

@@ -184,8 +184,8 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                     <section className="space-y-6">
                       <label className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] flex items-center gap-2"><BookmarkCheck size={14}/> Library Status</label>
                       <div className="flex gap-2 p-1.5 bg-zinc-950/50 rounded-[1.5rem] border border-white/5">
-                        <button onClick={() => setForm({...form, status: 'MAM'})} className={`flex-1 py-5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${form.status === 'MAM' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600 hover:text-white'}`}>Owned (MAM)</button>
-                        <button onClick={() => setForm({...form, status: 'SZUKAM'})} className={`flex-1 py-5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${form.status === 'SZUKAM' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-zinc-600 hover:text-white'}`}>Wanted (SZUKAM)</button>
+                        <button onClick={() => setForm({...form, status: 'OWNED'})} className={`flex-1 py-5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${form.status === 'OWNED' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600 hover:text-white'}`}>Owned (OWNED)</button>
+                        <button onClick={() => setForm({...form, status: 'WANTED'})} className={`flex-1 py-5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${form.status === 'WANTED' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-zinc-600 hover:text-white'}`}>Wanted (WANTED)</button>
                       </div>
                     </section>
 
@@ -244,9 +244,9 @@ export const DigitalDetailsModal = ({ album, onClose, onUpdateSuccess, onArtistC
                     <div className="flex flex-wrap gap-2">
                       <Badge icon={<Search size={12}/>} text={album.format} brand />
                       <Badge 
-                        icon={album.status === 'MAM' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
-                        text={album.status === 'MAM' ? 'OWNED' : 'WANTED'} 
-                        colorClass={album.status === 'MAM' ? 'bg-brand text-black shadow-brand/20' : 'bg-orange-500 text-black shadow-orange-500/20'}
+                        icon={album.status === 'OWNED' ? <BookmarkCheck size={12}/> : <Search size={12}/>} 
+                        text={album.status === 'OWNED' ? 'OWNED' : 'WANTED'} 
+                        colorClass={album.status === 'OWNED' ? 'bg-brand text-black shadow-brand/20' : 'bg-orange-500 text-black shadow-orange-500/20'}
                       />
                     </div>
                     

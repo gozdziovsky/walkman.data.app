@@ -5,7 +5,7 @@ export interface Album {
   title: string;
   coverUrl: string;
   format: string;
-  status: 'MAM' | 'SZUKAM';
+  status: 'OWNED' | 'WANTED';
   year?: number;
   genre?: string;
   rating?: number;

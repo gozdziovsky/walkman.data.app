@@ -8,7 +8,7 @@ create table public.albums (
   genre text,
   year integer,
   format text default 'FLAC',
-  status text default 'MAM',
+  status text default 'OWNED',
   rating integer default 0,
   spotify_url text,
   youtube_url text,

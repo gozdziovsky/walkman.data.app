@@ -9,7 +9,7 @@ export const CDAddModal = ({ onClose, onSuccess }: any) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [form, setForm] = useState({
     artist: '', title: '', coverUrl: '', genre: '',
-    year: new Date().getFullYear(), format: 'CD', status: 'MAM'
+    year: new Date().getFullYear(), format: 'CD', status: 'OWNED'
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

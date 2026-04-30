@@ -299,8 +299,8 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-zinc-600 uppercase ml-1">Status</label>
                   <div className="grid grid-cols-2 gap-2 bg-black/40 p-1 rounded-xl h-12 border border-white/5">
-                    <button type="button" onClick={() => setForm({...form, status: 'MAM'})} className={`rounded-lg text-[9px] font-black uppercase transition-all ${form.status === 'MAM' ? 'bg-brand text-black' : 'text-zinc-600 hover:text-white'}`}>Owned</button>
-                    <button type="button" onClick={() => setForm({...form, status: 'SZUKAM'})} className={`rounded-lg text-[9px] font-black uppercase transition-all ${form.status === 'SZUKAM' ? 'bg-orange-500 text-black' : 'text-zinc-600 hover:text-white'}`}>Wanted</button>
+                    <button type="button" onClick={() => setForm({...form, status: 'OWNED'})} className={`rounded-lg text-[9px] font-black uppercase transition-all ${form.status === 'OWNED' ? 'bg-brand text-black' : 'text-zinc-600 hover:text-white'}`}>Owned</button>
+                    <button type="button" onClick={() => setForm({...form, status: 'WANTED'})} className={`rounded-lg text-[9px] font-black uppercase transition-all ${form.status === 'WANTED' ? 'bg-orange-500 text-black' : 'text-zinc-600 hover:text-white'}`}>Wanted</button>
                   </div>
                 </div>
 
@@ -362,8 +362,8 @@ export const DetailsModal = ({ album, onClose, onUpdateSuccess, onArtistClick, o
                           <span className="text-xs font-black leading-none">{album.rating}/10</span>
                         </div>
                       )}
-                      <div className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest leading-none flex items-center ${album.status === 'MAM' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'}`}>
-                        {album.status === 'MAM' ? 'In Library' : 'On Wishlist'}
+                      <div className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest leading-none flex items-center ${album.status === 'OWNED' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'}`}>
+                        {album.status === 'OWNED' ? 'In Library' : 'On Wishlist'}
                       </div>
                     </div>
                   </div>

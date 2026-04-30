@@ -24,7 +24,7 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
     genre: '',
     year: new Date().getFullYear(), 
     format: 'FLAC' as Album['format'], 
-    status: 'MAM' as Album['status'], 
+    status: 'OWNED' as Album['status'], 
     rating: 0, 
     spotify_url: '', 
     youtube_url: '', 
@@ -214,8 +214,8 @@ export const AddAlbumModal = ({ onClose, onSuccess, searchSource, discogsToken }
           <div className="space-y-1">
             <label className="text-[9px] font-black uppercase text-zinc-600 ml-1">Initial Status</label>
             <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded-2xl border border-white/5 h-14">
-              <button type="button" onClick={() => setForm({...form, status: 'MAM'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'MAM' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600 hover:text-white'}`}>Owned</button>
-              <button type="button" onClick={() => setForm({...form, status: 'SZUKAM'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'SZUKAM' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-zinc-600 hover:text-white'}`}>Wanted</button>
+              <button type="button" onClick={() => setForm({...form, status: 'OWNED'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'OWNED' ? 'bg-brand text-black shadow-lg shadow-brand/20' : 'text-zinc-600 hover:text-white'}`}>Owned</button>
+              <button type="button" onClick={() => setForm({...form, status: 'WANTED'})} className={`flex-1 rounded-xl text-[10px] font-black uppercase transition-all ${form.status === 'WANTED' ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' : 'text-zinc-600 hover:text-white'}`}>Wanted</button>
             </div>
           </div>
 

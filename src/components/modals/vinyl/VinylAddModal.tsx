@@ -16,7 +16,7 @@ export const VinylAddModal = ({ onClose, onSuccess, discogsToken }: any) => {
   const [form, setForm] = useState({
     artist: '', title: '', coverUrl: '', genre: '',
     year: new Date().getFullYear(), format: '12" LP', 
-    status: 'MAM' as 'MAM' | 'SZUKAM', 
+    status: 'OWNED' as 'OWNED' | 'WANTED', 
     tracks: '', record_condition: 'VG+' // Pole specyficzne dla Winyli
   });
 

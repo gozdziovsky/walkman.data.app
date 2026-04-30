@@ -27,7 +27,7 @@ export const AlbumCard = ({ album, onClick }: AlbumCardProps) => {
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <Disc className="text-white" size={32} />
         </div>
-        {album.status === 'SZUKAM' && (
+        {album.status === 'WANTED' && (
           <div className="absolute top-2 right-2 bg-orange-500 text-black text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg">
             Wanted
           </div>
