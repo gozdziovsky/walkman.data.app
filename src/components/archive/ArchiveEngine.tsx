@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { 
   Plus, Settings2, Search as SearchIcon, Filter, Disc, 
-  BookmarkCheck, X, ListMusic 
+  BookmarkCheck, X, ListMusic, ArrowUpDown 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -25,6 +25,7 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
 
   const [filterFormat, setFilterFormat] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [sortBy, setSortBy] = useState('artist_asc'); // <-- NOWY STAN SORTOWANIA
   
   // Stany globalne pobierane z systemu
   const [cols, setCols] = useState(() => parseInt(localStorage.getItem('walkman_cols') || '3'));
@@ -50,16 +51,45 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
 
   useEffect(() => { fetchAlbums(); }, [tableName]);
 
+  // --- INTELIGENTNY SILNIK FILTROWANIA I SORTOWANIA ---
   const processedAlbums = useMemo(() => {
     let result = [...albums];
+    
+    // 1. Wyszukiwarka
     if (searchTerm) {
       const s = searchTerm.toLowerCase();
       result = result.filter(a => a.title.toLowerCase().includes(s) || a.artist.toLowerCase().includes(s));
     }
+    // 2. Filtry
     if (filterFormat !== 'ALL') result = result.filter(a => a.format === filterFormat);
     if (filterStatus !== 'ALL') result = result.filter(a => a.status === filterStatus);
+
+    // 3. Sortowanie
+    switch (sortBy) {
+      case 'artist_asc':
+        result.sort((a, b) => a.artist.localeCompare(b.artist) || a.title.localeCompare(b.title));
+        break;
+      case 'artist_desc':
+        result.sort((a, b) => b.artist.localeCompare(a.artist) || b.title.localeCompare(a.title));
+        break;
+      case 'title_asc':
+        result.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'title_desc':
+        result.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case 'year_desc':
+        result.sort((a, b) => (b.year || 0) - (a.year || 0));
+        break;
+      case 'year_asc':
+        result.sort((a, b) => (a.year || 0) - (b.year || 0));
+        break;
+      default:
+        break;
+    }
+
     return result;
-  }, [albums, searchTerm, filterFormat, filterStatus]);
+  }, [albums, searchTerm, filterFormat, filterStatus, sortBy]);
 
   const [visibleCount, setVisibleCount] = useState(40);
   const observer = useRef<IntersectionObserver | null>(null);
@@ -73,7 +103,8 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
     if (node) observer.current.observe(node);
   }, [visibleCount, processedAlbums.length]);
 
-  useEffect(() => { setVisibleCount(40); }, [searchTerm, filterFormat, filterStatus, tableName]);
+  // Resetujemy limit przy zmianie filtrów/sortowania
+  useEffect(() => { setVisibleCount(40); }, [searchTerm, filterFormat, filterStatus, sortBy, tableName]);
 
   const currentIndex = useMemo(() => 
     processedAlbums.findIndex(a => a.id === selectedAlbum?.id),
@@ -92,11 +123,6 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
     <div className="min-h-screen bg-[#09090b] text-white pb-32">
       <style>{`:root { --brand-color: ${themeColor}; } .text-brand { color: var(--brand-color) !important; } .bg-brand { background-color: var(--brand-color) !important; } .border-brand { border-color: var(--brand-color) !important; }`}</style>
       
-      {/* KLUCZOWA ZMIANA: Dynamiczny pt-2 vs pt-10
-        Jeśli showNav = true, pt-2 przytula logo od razu do paska.
-        Jeśli showNav = false, pt-10 robi za bezpieczną strefę dla notcha w iPhonie, 
-        ale całościowo logo i tak jest znacznie wyżej niż wtedy, gdy pasek istniał. 
-      */}
       <header className={`px-6 space-y-6 max-w-[1800px] mx-auto w-full transition-all duration-500 ease-out ${showNav ? 'pt-2' : 'pt-10 md:pt-12'}`}>
         {/* LOGO */}
         <div className="flex flex-col items-center justify-center"> 
@@ -122,29 +148,47 @@ export const ArchiveEngine = ({ tableName, archiveTitle, themeColor, logo, forma
           </div>
         </div>
 
-        {/* ANIMATED SEARCH BAR */}
-        <div className="relative group">
-          <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-brand transition-colors" size={14} />
-          <input 
-            type="text" 
-            placeholder="Search collection..." 
-            className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none focus:bg-zinc-900/60 focus:border-brand/30 transition-all" 
-            value={searchTerm} 
-            onChange={e => setSearchTerm(e.target.value)} 
-          />
-          <AnimatePresence>
-            {searchTerm && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => setSearchTerm('')}
-                className="absolute right-5 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white transition-colors"
-              >
-                <X size={16} strokeWidth={3} />
-              </motion.button>
-            )}
-          </AnimatePresence>
+        {/* SEARCH BAR & SORTING DROPDOWN */}
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative group flex-1">
+            <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-brand transition-colors" size={14} />
+            <input 
+              type="text" 
+              placeholder="Search collection..." 
+              className="w-full bg-zinc-900/30 border border-white/5 rounded-[1.5rem] py-4 pl-12 pr-12 text-sm font-bold outline-none focus:bg-zinc-900/60 focus:border-brand/30 transition-all" 
+              value={searchTerm} 
+              onChange={e => setSearchTerm(e.target.value)} 
+            />
+            <AnimatePresence>
+              {searchTerm && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white transition-colors"
+                >
+                  <X size={16} strokeWidth={3} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="relative flex items-center bg-zinc-900/30 border border-white/5 rounded-[1.5rem] px-4 py-4 md:py-0 hover:bg-zinc-900/60 focus-within:border-brand/30 transition-all shrink-0">
+            <ArrowUpDown size={14} className="text-zinc-600 absolute left-4 pointer-events-none" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-transparent text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-300 outline-none cursor-pointer appearance-none pl-6 pr-2 w-full md:w-auto h-full"
+            >
+              <option value="artist_asc" className="bg-zinc-900 text-white">Artist: A-Z</option>
+              <option value="artist_desc" className="bg-zinc-900 text-white">Artist: Z-A</option>
+              <option value="title_asc" className="bg-zinc-900 text-white">Title: A-Z</option>
+              <option value="title_desc" className="bg-zinc-900 text-white">Title: Z-A</option>
+              <option value="year_desc" className="bg-zinc-900 text-white">Newest First</option>
+              <option value="year_asc" className="bg-zinc-900 text-white">Oldest First</option>
+            </select>
+          </div>
         </div>
       </header>
 
