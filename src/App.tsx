@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import DigitalArchive from './pages/DigitalArchive';
+import { VinylArchive } from './pages/VinylArchive'; // <-- DODANY IMPORT
 
-const VinylArchive = () => <div className="pt-40 text-center text-zinc-800 font-black uppercase tracking-[1em] text-sm animate-pulse italic">Vinyl Interface Locked</div>;
+// Zostawiamy zablokowane CD, wrócimy do tego w Fazie 4
 const CDArchive = () => <div className="pt-40 text-center text-zinc-800 font-black uppercase tracking-[1em] text-sm animate-pulse italic">Compact Disc Locked</div>;
 
 export default function App() {
@@ -34,7 +35,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to={`/${defaultArchive}`} replace />} />
           <Route path="/digital" element={<DigitalArchive />} />
-          <Route path="/vinyl" element={<VinylArchive />} />
+          <Route path="/vinyl" element={<VinylArchive />} /> {/* <-- ODBLOKOWANY ROUTE */}
           <Route path="/cd" element={<CDArchive />} />
         </Routes>
       </div>
